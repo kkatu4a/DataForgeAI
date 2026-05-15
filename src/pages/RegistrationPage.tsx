@@ -5,6 +5,8 @@ import { registrationService } from '../services/registrationService';
 import { authService } from '../services/authService';
 import { useAuthStore } from '../store/authStore';
 import type { apiError } from '../types/apiError';
+import EyeOpen from '../assets/icons/EyeOpen.svg';
+import EyeClose from '../assets/icons/EyeClose.svg';
 
 const RegistrationPage: React.FC = () => {
     const navigate = useNavigate();
@@ -13,6 +15,7 @@ const RegistrationPage: React.FC = () => {
     const [username, setUsername] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false); // состояние для показа пароля
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -39,53 +42,95 @@ const RegistrationPage: React.FC = () => {
         }
     };
 
+    // Переключатель показа пароля
+    const togglePasswordVisibility = () => {
+        setShowPassword(!showPassword);
+    };
+
     return (
-        <div>
-            <h2>Регистрация</h2>
-            
-            <form onSubmit={handleSubmit}>
-                <div>
-                    <input
-                        type="text"
-                        placeholder="Имя пользователя"
-                        value={username}
-                        onChange={(e) => setUsername(e.target.value)}
-                        required
-                        disabled={isLoading}
-                    />
-                </div>
-                
-                <div>
-                    <input
-                        type="email"
-                        placeholder="Email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                        disabled={isLoading}
-                    />
-                </div>
-                
-                <div>
-                    <input
-                        type="password"
-                        placeholder="Пароль"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                        disabled={isLoading}
-                    />
-                </div>
-                
-                <button type="submit" disabled={isLoading}>
-                    {isLoading ? 'Регистрация...' : 'Зарегистрироваться'}
+      <div className="registration-page">
+        <div className="registration-page__container">
+          <h2 className="registration-page__title">Регистрация</h2>
+
+          <form className="registration-form" onSubmit={handleSubmit}>
+            <div className="registration-form__field">
+              <label htmlFor="username" className="registration-form__label">
+                Имя пользователя
+              </label>
+              <input
+                id="username"
+                type="text"
+                className="registration-form__input"
+                placeholder="Введите имя пользователя"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                required
+                disabled={isLoading}
+              />
+            </div>
+
+            <div className="registration-form__field">
+              <label htmlFor="email" className="registration-form__label">
+                Email
+              </label>
+              <input
+                id="email"
+                type="email"
+                className="registration-form__input"
+                placeholder="Введите email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                disabled={isLoading}
+              />
+            </div>
+
+            <div className="registration-form__field">
+              <label htmlFor="password" className="registration-form__label">
+                Пароль
+              </label>
+              <div className="registration-form__password-wrapper">
+                <input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  className="registration-form__input registration-form__input--with-icon"
+                  placeholder="Введите пароль"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  disabled={isLoading}
+                />
+                <button
+                  type="button"
+                  className="registration-form__password-toggle"
+                  onClick={togglePasswordVisibility}
+                  tabIndex={-1}
+                >
+                  {showPassword ? (
+                    <img src={EyeOpen} alt="Скрыть пароль" />
+                  ) : (
+                    <img src={EyeClose} alt="Показать пароль" />
+                  )}
                 </button>
-            </form>
-            
-            <p>
-                Уже есть аккаунт? <Link to="/login">Войти</Link>
-            </p>
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              className="registration-form__button"
+              disabled={isLoading}
+            >
+              {isLoading ? "Регистрация..." : "Зарегистрироваться"}
+            </button>
+          </form>
+          <p className="registration-page__subtitle">
+            Уже есть аккаунт?{" "}
+            <Link to="/login" className="registration-page__link">
+              Войти
+            </Link>
+          </p>
         </div>
+      </div>
     );
 };
 
