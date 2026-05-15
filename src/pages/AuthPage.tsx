@@ -6,6 +6,7 @@ import { useAuthStore } from "../store/authStore";
 import type { apiError } from "../types/apiError";
 import EyeOpen from "../assets/icons/EyeOpen.svg";
 import EyeClose from "../assets/icons/EyeClose.svg";
+import './AuthPage.scss';
 
 const AuthPage: React.FC = () => {
   const navigate = useNavigate();
