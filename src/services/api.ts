@@ -1,5 +1,7 @@
 import axios, {type AxiosError} from 'axios';
 import { authService } from './authService.ts';
+import type { User, Dataset } from '../types/types';
+import api from './api';
 
 const API_BASE_URL = 'http://localhost:8080/api';
 
@@ -39,5 +41,17 @@ apiClient.interceptors.response.use(
         });
     }
 );
+
+export const userAPI = {
+    getMe: async (): Promise<User> => {
+        const response = await api.get('/v1/user/me');
+        return response.data;
+    },
+    
+    getMyDatasets: async (): Promise<Dataset[]> => {
+        const response = await api.get('/v1/datasitory/my');
+        return response.data;
+    },
+};
 
 export default apiClient;
