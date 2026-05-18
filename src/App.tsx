@@ -9,13 +9,13 @@ import AuthPage from "./pages/AuthPage";
 import ProfilePage from "./pages/ProfilePage";
 import MyDatasetsPage from "./pages/MyDatasetsPage";
 import StarsPage from "./pages/StarsPage";
-// import { useAuthStore } from "./store/authStore";
+import { useAuthStore } from "./store/authStore";
 
 // Компонент для защиты приватных маршрутов
-// const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
-//   const { isAuthenticated } = useAuthStore();
-//   return isAuthenticated ? children : <Navigate to="/login" />;
-// };
+const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
+  const { isAuthenticated } = useAuthStore();
+  return isAuthenticated ? children : <Navigate to="/login" />;
+};
 
 function App() {
   return (
@@ -29,27 +29,27 @@ function App() {
         <Route
           path="/profile"
           element={
-            // <PrivateRoute>
+            <PrivateRoute>
               <ProfilePage />
-            // </PrivateRoute>
+            </PrivateRoute>
           }
         />
 
         <Route
           path="/profile/datasets"
           element={
-            // <PrivateRoute>
+            <PrivateRoute>
               <MyDatasetsPage />
-            // </PrivateRoute>
+            </PrivateRoute>
           }
         />
 
         <Route
           path="/profile/stars"
           element={
-            // <PrivateRoute>
+            <PrivateRoute>
               <StarsPage />
-            //</PrivateRoute>
+            </PrivateRoute>
           }
         />
 
