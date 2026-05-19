@@ -4,15 +4,15 @@ import {
     type AuthenticationResponse, type User
 } from '../types/types.ts';
 
-const USER_URL = "v1/user";
+const USER_URL = "/v1/user";
 
 class AuthService {
 
     async login(credentials: AuthenticationRequest): Promise<AuthenticationResponse> {
         try {
             const res = await api.post(USER_URL + '/authentication', credentials);
-            console.debug('ответ:', res);
-            console.debug('данные:', res.data);
+            console.log('ответ:', res);
+            console.log('данные:', res.data);
 
             if (!res.data || !res.data.token)
                 throw new Error('Неизвестная ошибка сервера: отсутствует токен');
@@ -43,7 +43,8 @@ class AuthService {
             return {
                 id: -1,
                 username: "unknow",
-                email: "unknow"
+                email: "unknow",
+                createdAt: "unknow"
             };
         }
     }

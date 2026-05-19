@@ -11,10 +11,23 @@ const MyDatasetsList: React.FC<MyDatasetsListProps> = ({
   datasets,
   searchQuery,
 }) => {
+  const handleCreateDataset = () => {
+    // TODO: добавить функционал создания датасета позже
+    console.log("Создать датасет");
+  };
+
   if (datasets.length === 0) {
     return (
       <div className="my-datasets">
-        <h3 className="my-datasets__title">Мои датасеты</h3>
+        <div className="my-datasets__header">
+          <h3 className="my-datasets__title">Мои датасеты</h3>
+          <button
+            className="my-datasets__create-btn"
+            onClick={handleCreateDataset}
+          >
+            Создать датасет
+          </button>
+        </div>
         {searchQuery ? (
           <p className="my-datasets__empty">
             Ничего не найдено по запросу "{searchQuery}"
@@ -28,7 +41,15 @@ const MyDatasetsList: React.FC<MyDatasetsListProps> = ({
 
   return (
     <div className="my-datasets">
-      <h3 className="my-datasets__title">Мои датасеты ({datasets.length})</h3>
+      <div className="my-datasets__header">
+        <h3 className="my-datasets__title">Мои датасеты ({datasets.length})</h3>
+        <button
+          className="my-datasets__create-btn"
+          onClick={handleCreateDataset}
+        >
+          Создать датасет
+        </button>
+      </div>
       <div className="my-datasets__list">
         {datasets.map((dataset) => (
           <DatasetCard key={dataset.id} dataset={dataset} showCreator={true} />

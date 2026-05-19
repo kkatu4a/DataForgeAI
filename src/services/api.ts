@@ -1,34 +1,33 @@
-import axios, {type AxiosError} from 'axios';
+import axios from 'axios';
 import { authService } from './authService.ts';
 import type { User, Dataset } from '../types/types';
 import api from './api';
 
-const API_BASE_URL = 'http://localhost:8080/api';
+const API_BASE_URL = 'https://f52olv-213-208-175-202.ru.tuna.am/api';
 
 const apiClient = axios.create({
     baseURL: API_BASE_URL,
     headers: {
         'Content-Type': 'application/json',
+        'tuna-skip-browser-warning': 'true',
     },
 });
 
-// добавление токена
 apiClient.interceptors.request.use((config) => {
     const token = authService.getToken();
-
-    if (token)
+    
+    const publicEndpoints = ['/v1/user/registration', '/v1/user/authentication'];
+    const isPublic = publicEndpoints.some(endpoint => config.url?.includes(endpoint));
+    
+    if (token) {
         config.headers.Authorization = `Bearer ${token}`;
-    else
-        console.error("Нет токена авторизации")
-
+    } else if (!isPublic) {
+        console.error("Нет токена авторизации для", config.url);
+    }
+    
     return config;
-},
-(error: AxiosError) => {
-    console.error('Ошибка запроса:', error);
-    return Promise.reject(error);
 });
 
-// обработка ошибок
 apiClient.interceptors.response.use(
     (response) => response,
     (error) => {
