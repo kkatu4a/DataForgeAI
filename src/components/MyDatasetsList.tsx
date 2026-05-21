@@ -1,4 +1,5 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import type { Dataset } from "../types/types";
 import DatasetCard from "./DatasetCard";
 
@@ -11,9 +12,10 @@ const MyDatasetsList: React.FC<MyDatasetsListProps> = ({
   datasets,
   searchQuery,
 }) => {
+  const navigate = useNavigate();
+
   const handleCreateDataset = () => {
-    // TODO: добавить функционал создания датасета позже
-    console.log("Создать датасет");
+    navigate("/profile/datasets/create");
   };
 
   if (datasets.length === 0) {

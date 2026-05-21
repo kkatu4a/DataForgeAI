@@ -9,6 +9,7 @@ import AuthPage from "./pages/AuthPage";
 import ProfilePage from "./pages/ProfilePage";
 import MyDatasetsPage from "./pages/MyDatasetsPage";
 import StarsPage from "./pages/StarsPage";
+import CreateDatasetPage from "./pages/CreateDatasetPage";
 import { useAuthStore } from "./store/authStore";
 
 // Компонент для защиты приватных маршрутов
@@ -40,6 +41,16 @@ function App() {
           element={
             <PrivateRoute>
               <MyDatasetsPage />
+            </PrivateRoute>
+          }
+        />
+
+        {/* Новый маршрут для создания датасета */}
+        <Route
+          path="/profile/datasets/create"
+          element={
+            <PrivateRoute>
+              <CreateDatasetPage />
             </PrivateRoute>
           }
         />
