@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { authService } from "../services/authService";
+import './Settings.scss';
 
 const Settings: React.FC = () => {
   const navigate = useNavigate();

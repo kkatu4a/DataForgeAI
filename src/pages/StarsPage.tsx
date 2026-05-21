@@ -7,6 +7,7 @@ import ProfileHeader from "../components/ProfileHeader";
 import StarredDatasetsList from "../components/StarredDatasetsList";
 import type { User, Dataset } from "../types/types";
 import type { apiError } from "../types/apiError";
+import './StarsPage.scss';
 
 const StarsPage: React.FC = () => {
   const navigate = useNavigate();

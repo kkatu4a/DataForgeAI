@@ -1,6 +1,7 @@
 import React from "react";
 import type { Dataset } from "../types/types";
 import DatasetCard from "./DatasetCard";
+import './PopularDatasets.scss';
 
 interface PopularDatasetsProps {
   datasets: Dataset[];

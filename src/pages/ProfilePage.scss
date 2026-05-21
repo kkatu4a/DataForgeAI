@@ -1,0 +1,42 @@
+$color-bg: #FFFFFF;
+$color-text: #111827;
+$color-text-secondary: #6B7280;
+$color-border: #E5E7EB;
+$color-border-light: #F3F4F6;
+$color-primary: #4D1FB9;
+$color-primary-light: #F3F0FF;
+$color-placeholder: #9CA3AF;
+$font-family: 'Inter', sans-serif;
+$radius: 10px;
+$radius-sm: 8px;
+$transition-default: all 0.2s ease;
+
+.profile-page {
+  min-height: 100vh;
+  background-color: $color-bg;
+  font-family: $font-family;
+  color: $color-text;
+}
+
+.profile-page__content {
+  display: flex;
+  flex-direction: column;
+  padding: 32px 24px;
+  box-sizing: border-box;
+  max-width: 1280px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.profile-page__main {
+  display: flex;
+  justify-content: space-between;
+  gap: 32px;
+  margin-bottom: 32px;
+
+  @media (width <= 768px) {
+    flex-direction: column;
+    gap: 24px;
+    margin-bottom: 24px;
+  }
+}

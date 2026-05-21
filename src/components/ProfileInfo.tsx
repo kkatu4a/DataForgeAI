@@ -1,4 +1,5 @@
 import React from "react";
+import './ProfileInfo.scss'
 
 interface ProfileInfoProps {
   username: string;
