@@ -3,7 +3,7 @@ import { authService } from './authService.ts';
 import type { User, Dataset } from '../types/types';
 import api from './api';
 
-const API_BASE_URL = 'https://f52olv-213-208-175-202.ru.tuna.am/api';
+const API_BASE_URL = 'http://82.147.67.239:8080/api';
 
 const apiClient = axios.create({
     baseURL: API_BASE_URL,
@@ -49,6 +49,59 @@ export const userAPI = {
     
     getMyDatasets: async (): Promise<Dataset[]> => {
         const response = await api.get('/v1/datasitory/my');
+        return response.data;
+    },
+};
+
+
+
+// fileAPI
+export const fileAPI = {
+    // загрузка изображений POST /files/images/{id}
+    uploadImages: async (datasetId: number, files: File[]): Promise<void> => {
+        const formData = new FormData();
+        files.forEach(file => {
+            formData.append('files', file);
+        });
+        await apiClient.post(`/files/images/${datasetId}`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        });
+    },
+
+    // загрузка файла разметки (метки) POST /files/markup/{id}
+    uploadMarkup: async (datasetId: number, file: File): Promise<void> => {
+        const formData = new FormData();
+        formData.append('file', file);
+        await apiClient.post(`/files/markup/${datasetId}`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        });
+    },
+
+    // загрузка файла вероятностей POST /files/probability/{id}
+    uploadProbability: async (datasetId: number, file: File): Promise<void> => {
+        const formData = new FormData();
+        formData.append('file', file);
+        await apiClient.post(`/files/probability/${datasetId}`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        });
+    },
+
+    // загрузка метаданных POST /files/metadata/{id}
+    uploadMetadata: async (datasetId: number, file: File): Promise<void> => {
+        const formData = new FormData();
+        formData.append('file', file);
+        await apiClient.post(`/files/metadata/${datasetId}`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        });
+    },
+};
+export const datasetAPI = {
+    create: async (data: {
+        name: string;
+        description?: string;
+        visibility: 'PUBLIC' | 'PRIVATE';
+    }): Promise<Dataset> => {
+        const response = await apiClient.post('/v1/datasitory', data);
         return response.data;
     },
 };
