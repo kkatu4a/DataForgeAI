@@ -8,6 +8,7 @@ import { datasetAPI, fileAPI } from "../services/api";
 import { authService } from "../services/authService";
 import type { User } from "../types/types";
 import type { apiError } from "../types/apiError";
+import './CreateDatasetPage.scss';
 
 const CreateDatasetPage: React.FC = () => {
   const navigate = useNavigate();

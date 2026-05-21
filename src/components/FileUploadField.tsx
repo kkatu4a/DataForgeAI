@@ -1,4 +1,7 @@
 import React, { useState, useRef } from "react";
+import Upload from "../assets/icons/Upload.svg";
+import Cross from "../assets/icons/Cross.svg";
+import './FileUploadField.scss';
 
 interface FileUploadFieldProps {
   label: string;
@@ -110,7 +113,7 @@ const FileUploadField: React.FC<FileUploadFieldProps> = ({
       >
         {!file ? (
           <div className="file-upload-field__placeholder">
-            <div className="file-upload-field__icon">{/* иконка файла */}</div>
+            <div className="file-upload-field__icon">{<img src={Upload} alt="Upload icon" />}</div>
             <p className="file-upload-field__text">
               Перетащите файл сюда или нажмите для выбора
             </p>
@@ -118,7 +121,7 @@ const FileUploadField: React.FC<FileUploadFieldProps> = ({
         ) : (
           <div className="file-upload-field__file-info">
             <div className="file-upload-field__file-icon">
-              {/* иконка документа */}
+              {<img src={Upload} alt="Upload icon" />}
             </div>
             <div className="file-upload-field__file-details">
               <div className="file-upload-field__file-name">{file.name}</div>
@@ -134,7 +137,7 @@ const FileUploadField: React.FC<FileUploadFieldProps> = ({
                 handleRemoveFile();
               }}
             >
-              {/* иконка крестика */}
+              {<img src={Cross} alt="Удалить" />}
             </button>
           </div>
         )}
