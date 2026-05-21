@@ -9,6 +9,7 @@ import PopularDatasets from "../components/PopularDatasets";
 import Settings from "../components/Settings";
 import type { User, Dataset } from "../types/types";
 import type { apiError } from "../types/apiError";
+import './ProfilePage.scss';
 
 const ProfilePage: React.FC = () => {
   const navigate = useNavigate();

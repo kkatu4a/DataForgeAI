@@ -1,5 +1,7 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
+import UserIcon from "../assets/icons/Profile.svg";
+import './ProfileHeader.scss';
 
 interface ProfileHeaderProps {
   username: string;
@@ -16,7 +18,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     <header className="profile-header">
       <div className="profile-header__top">
         <div className="profile-header__user">
-                  <span className="profile-header__user-icon">{/* ДОБАВИТЬ ИКОНКУ ЧЕЛОВЕКА В КРУЖОЧКЕ */ }</span>
+                  <span className="profile-header__user-icon">{<img src={UserIcon} alt="User icon" />}</span>
           <span className="profile-header__username">{username}</span>
         </div>
         <div className="profile-header__search">
@@ -33,6 +35,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
       <nav className="profile-header__nav">
         <NavLink
           to="/profile"
+          end
           className={({ isActive }) =>
             isActive
               ? "profile-header__link profile-header__link--active"
