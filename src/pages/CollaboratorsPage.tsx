@@ -7,6 +7,8 @@ import { authService } from "../services/authService";
 import { datasetAPI } from "../services/api";
 import type { Dataset } from "../types/types";
 import type { apiError } from "../types/apiError";
+import ExportIcon from "../assets/icons/Export.svg";
+import './CollaboratorsPage.scss';
 
 interface Collaborator {
   id: number;
@@ -174,7 +176,7 @@ const CollaboratorsPage: React.FC = () => {
               Работа с датасетом
             </button>
             <button className="collaborators-page__export-btn">
-              Export
+              <img src={ExportIcon} alt="Export icon" />
             </button>
           </div>
         </div>
@@ -255,7 +257,7 @@ const CollaboratorsPage: React.FC = () => {
                         <option value="analyst">Аналитик</option>
                       </select>
                     </td>
-                    <tr>
+                    <td>
                       <button
                         className="collaborators-page__remove-btn"
                         onClick={() => handleRemoveCollaborator(collaborator.id)}
@@ -263,7 +265,7 @@ const CollaboratorsPage: React.FC = () => {
                       >
                         Удалить
                       </button>
-                    </tr>
+                    </td>
                   </tr>
                 ))}
               </tbody>

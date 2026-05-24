@@ -6,6 +6,8 @@ import DatasetNavigation from "../components/DatasetNavigation";
 import { authService } from "../services/authService";
 import { datasetAPI } from "../services/api";
 import type { Dataset } from "../types/types";
+import ExportIcon from "../assets/icons/Export.svg";
+import './DuplicatesPage.scss';
 
 interface DuplicateObject {
   id: number;
@@ -213,7 +215,9 @@ const DuplicatesPage: React.FC = () => {
             <button className="duplicates-page__action-btn duplicates-page__action-btn--active">
               Работа с датасетом
             </button>
-            <button className="duplicates-page__export-btn">Export</button>
+            <button className="duplicates-page__export-btn">
+              <img src={ExportIcon} alt="Export icon" />
+            </button>
           </div>
         </div>
 
