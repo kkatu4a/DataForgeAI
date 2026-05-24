@@ -7,6 +7,7 @@ import ProfileHeader from "../components/ProfileHeader";
 import MyDatasetsList from "../components/MyDatasetsList";
 import type { User, Dataset } from "../types/types";
 import type { apiError } from "../types/apiError";
+import './MyDatasetsPage.scss'
 
 const MyDatasetsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -94,6 +95,7 @@ const MyDatasetsPage: React.FC = () => {
           datasets={filteredDatasets}
           searchQuery={searchQuery}
           onDatasetDelete={handleDatasetDelete}
+          
         />
       </div>
     </div>

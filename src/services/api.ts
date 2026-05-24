@@ -142,4 +142,27 @@ export const datasetAPI = {
     },
 };
 
+
+export const favoriteAPI = {
+    addToFavorites: async (datasetId: number): Promise<void> => {
+        await apiClient.post(`/v1/favorite/${datasetId}`);
+    },
+
+    removeFromFavorites: async (datasetId: number): Promise<void> => {
+        await apiClient.delete(`/v1/favorite/${datasetId}`);
+    },
+
+    getMyFavorites: async (): Promise<Dataset[]> => {
+        const response = await apiClient.get('/v1/favorite/my');
+        if (response.data && Array.isArray(response.data.datasitoryDtoList)) {
+            return response.data.datasitoryDtoList;
+        }
+        if (Array.isArray(response.data)) {
+            return response.data;
+        }
+        console.error('getMyFavorites вернул неожиданный формат:', response.data);
+        return [];
+    },
+};
+
 export default apiClient;

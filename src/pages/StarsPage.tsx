@@ -1,64 +1,92 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
-import { userAPI } from "../services/api";
-import { authService } from "../services/authService";
 import ProfileHeader from "../components/ProfileHeader";
-import StarredDatasetsList from "../components/StarredDatasetsList";
-import type { User, Dataset } from "../types/types";
+import DatasetCard from "../components/DatasetCard";
+import { favoriteAPI } from "../services/api";
+import { authService } from "../services/authService";
+import type { Dataset, User } from "../types/types";
 import type { apiError } from "../types/apiError";
-import './StarsPage.scss';
+import './StarsPage.scss'
 
 const StarsPage: React.FC = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
-  const [starredDatasets, setStarredDatasets] = useState<Dataset[]>([]);
+  const [favorites, setFavorites] = useState<Dataset[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
 
+  // Выносим fetchFavorites за пределы эффекта
+  const fetchFavorites = async () => {
+    try {
+      const data = await favoriteAPI.getMyFavorites();
+      setFavorites(data);
+    } catch (error) {
+      const apiError = error as apiError;
+      if (apiError.messages && apiError.messages.length > 0) {
+        apiError.messages.forEach((msg: string) => toast.error(msg));
+      } else {
+        toast.error("Ошибка загрузки избранного");
+      }
+    }
+  };
+
   useEffect(() => {
+    let isMounted = true;
+
     if (!authService.isAuthenticated()) {
       navigate("/login");
       return;
     }
 
-    const fetchData = async () => {
-      setIsLoading(true);
+    const fetchUser = async () => {
       try {
-        const userData = await userAPI.getMe();
-        setUser(userData);
-        // TODO: когда появится API для избранных датасетов
-        setStarredDatasets([]);
+        const userData = await authService.fetchCurrentUser();
+        if (isMounted && userData && userData.id !== -1) {
+          setUser(userData);
+        }
       } catch (error) {
-        const apiError = error as apiError;
-        if (apiError.messages) {
-          apiError.messages.forEach((msg) => toast.error(msg));
-        } else {
-          toast.error("Ошибка загрузки");
-        }
-        if (apiError.code === 401) {
-          authService.logout();
-          navigate("/login");
-        }
-      } finally {
+        console.error("Ошибка загрузки пользователя", error);
+      }
+    };
+
+    const loadData = async () => {
+      setIsLoading(true);
+      await Promise.all([fetchUser(), fetchFavorites()]);
+      if (isMounted) {
         setIsLoading(false);
       }
     };
 
-    fetchData();
+    loadData();
+
+    return () => {
+      isMounted = false;
+    };
   }, [navigate]);
 
-  const filteredStarred = starredDatasets.filter(
+  const handleRemoveFromFavorites = async (datasetId: number) => {
+    try {
+      await favoriteAPI.removeFromFavorites(datasetId);
+      setFavorites((prev) =>
+        prev.filter((dataset) => dataset.id !== datasetId),
+      );
+      toast.success("Датасет удалён из избранного");
+    } catch (error) {
+      const apiError = error as apiError;
+      if (apiError.messages && apiError.messages.length > 0) {
+        apiError.messages.forEach((msg: string) => toast.error(msg));
+      } else {
+        toast.error("Ошибка");
+      }
+    }
+  };
+
+  const filteredFavorites = favorites.filter(
     (dataset) =>
       dataset.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       dataset.description.toLowerCase().includes(searchQuery.toLowerCase()),
   );
-
-  const handleUnstar = (datasetId: number) => {
-    // TODO: API запрос на удаление из избранного
-    setStarredDatasets((prev) => prev.filter((d) => d.id !== datasetId));
-    toast.success("Датасет удалён из избранного");
-  };
 
   if (isLoading) {
     return <div className="loading">Загрузка...</div>;
@@ -77,10 +105,30 @@ const StarsPage: React.FC = () => {
       />
 
       <div className="stars-page__content">
-        <StarredDatasetsList
-          datasets={filteredStarred}
-          onUnstar={handleUnstar}
-        />
+        <div className="stars-page__header">
+          <h1 className="stars-page__title">Избранные датасеты</h1>
+        </div>
+
+        {filteredFavorites.length === 0 ? (
+          <p className="stars-page__empty">
+            {searchQuery
+              ? `Ничего не найдено по запросу "${searchQuery}"`
+              : "У вас пока нет избранных датасетов"}
+          </p>
+        ) : (
+          <div className="stars-page__list">
+            {filteredFavorites.map((dataset) => (
+              <DatasetCard
+                key={dataset.id}
+                dataset={dataset}
+                showCreator={true}
+                onStarClick={() => handleRemoveFromFavorites(dataset.id)}
+                isStarred={true}
+                showAnalyticsButton={true}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
