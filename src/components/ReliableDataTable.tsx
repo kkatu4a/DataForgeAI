@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from "react";
 import type { ReliableData } from "../types/types";
+import './ReliableDataTable.scss';
 
 interface ReliableDataTableProps {
   data: ReliableData[];

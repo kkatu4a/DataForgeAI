@@ -14,6 +14,7 @@ import { authService } from "../services/authService";
 import { datasetAPI } from "../services/api";
 import type { AnalyticsResponse, Dataset } from "../types/types";
 import type { apiError } from "../types/apiError";
+import './DataAnalyticsPage.scss';
 
 const DatasetAnalyticsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -150,7 +151,7 @@ const DatasetAnalyticsPage: React.FC = () => {
 
         <section className="dataset-analytics-page__section">
           <h2 className="dataset-analytics-page__section-title">
-            Спорные объекты
+            Спорные метки
           </h2>
           <ControversialObjectsTable data={analytics.controversialObjects} />
         </section>

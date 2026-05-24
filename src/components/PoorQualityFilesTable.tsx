@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from "react";
 import type { PoorQualityFile } from "../types/types";
+import './PoorQualityFilesTable.scss';
 
 interface PoorQualityFilesTableProps {
   data: PoorQualityFile[];

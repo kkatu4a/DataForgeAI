@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from "react";
 import type { AnalyticsObject } from "../types/types";
+import './ObjectsTable.scss';
 
 interface ObjectsTableProps {
   data: AnalyticsObject[];

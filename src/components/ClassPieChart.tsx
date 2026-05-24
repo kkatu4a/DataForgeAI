@@ -1,6 +1,7 @@
 import React from "react";
 import { PieChart, Pie, Cell, Tooltip, Legend } from "recharts";
 import type { ClassData } from "../types/types";
+import './ClassPieChart.scss';
 
 interface ClassPieChartProps {
   data: ClassData[];
