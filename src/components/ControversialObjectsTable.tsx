@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from "react";
 import type { ControversialObject } from "../types/types";
+import './ControversialObjectsTable.scss';
 
 interface ControversialObjectsTableProps {
   data: ControversialObject[];

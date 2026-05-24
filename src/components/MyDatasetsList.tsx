@@ -5,6 +5,7 @@ import type { Dataset } from "../types/types";
 import DatasetCard from "./DatasetCard";
 import { datasetAPI } from "../services/api";
 import type { apiError } from "../types/apiError";
+import './MyDatasetsList.scss';
 
 interface MyDatasetsListProps {
   datasets: Dataset[];

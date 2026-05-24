@@ -4,6 +4,7 @@ import type {
   ClassData,
 } from "../types/types";
 import ClassPieChart from "./ClassPieChart";
+import './GeneralAnalytics.scss';
 
 interface GeneralAnalyticsProps {
   general: GeneralAnalyticsType;

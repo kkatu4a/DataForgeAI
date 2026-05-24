@@ -4,12 +4,12 @@ import type { AnalyticsResponse, BrokenFile } from '../types/types';
 export const analyticsAPI = {
     getAnalytics: async (datasetId: number): Promise<AnalyticsResponse> => {
         console.log('Запрос аналитики для датасета ID:', datasetId);
-        console.log('URL:', `/v1/datasitory/analytics/${datasetId}`);
+        console.log('URL:', `/v1/analytics/${datasetId}`);
         
         // TODO: Раскомментировать, когда бэкенд будет готов
         /*
         try {
-            const response = await apiClient.get(`/v1/datasitory/analytics/${datasetId}`);
+            const response = await apiClient.get(`/v1/analytics/${datasetId}`);
             return response.data;
         } catch (error) {
             console.error('Ошибка при запросе аналитики:', error);
