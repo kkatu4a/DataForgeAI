@@ -11,7 +11,8 @@ import PoorQualityFilesTable from "../components/PoorQualityFilesTable";
 import RoadmapBlock from "../components/RoadmapBlock";
 import { analyticsAPI } from "../services/analyticsAPI";
 import { authService } from "../services/authService";
-import type { AnalyticsResponse } from "../types/types";
+import { datasetAPI } from "../services/api";
+import type { AnalyticsResponse, Dataset } from "../types/types";
 import type { apiError } from "../types/apiError";
 
 const DatasetAnalyticsPage: React.FC = () => {
@@ -20,6 +21,7 @@ const DatasetAnalyticsPage: React.FC = () => {
   const datasetId = Number(id);
 
   const [user, setUser] = useState<{ username: string } | null>(null);
+  const [dataset, setDataset] = useState<Dataset | null>(null);
   const [analytics, setAnalytics] = useState<AnalyticsResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -41,6 +43,15 @@ const DatasetAnalyticsPage: React.FC = () => {
       }
     };
 
+    const fetchDataset = async () => {
+      try {
+        const data = await datasetAPI.getDatasetById(datasetId);
+        setDataset(data);
+      } catch (error) {
+        console.error("Ошибка загрузки датасета", error);
+      }
+    };
+
     const fetchAnalytics = async () => {
       try {
         const data = await analyticsAPI.getAnalytics(datasetId);
@@ -58,6 +69,7 @@ const DatasetAnalyticsPage: React.FC = () => {
     };
 
     fetchUser();
+    fetchDataset();
     fetchAnalytics();
   }, [navigate, datasetId]);
 
@@ -69,9 +81,11 @@ const DatasetAnalyticsPage: React.FC = () => {
     return <div className="loading">Загрузка аналитики...</div>;
   }
 
-  if (!analytics) {
-    return <div className="error">Не удалось загрузить аналитику</div>;
+  if (!analytics || !dataset) {
+    return <div className="error">Не удалось загрузить данные</div>;
   }
+
+  const visibilityText = dataset.type === "OPEN" ? "Публичный" : "Приватный";
 
   return (
     <div className="dataset-analytics-page">
@@ -90,7 +104,26 @@ const DatasetAnalyticsPage: React.FC = () => {
           >
             ← Назад
           </button>
-          <h1 className="dataset-analytics-page__title">Аналитика датасета</h1>
+          <div className="dataset-analytics-page__title-wrapper">
+            <h1 className="dataset-analytics-page__title">{dataset.name}</h1>
+            <span className="dataset-analytics-page__visibility">
+              {visibilityText}
+            </span>
+          </div>
+          <div className="dataset-analytics-page__actions">
+            <button className="dataset-analytics-page__action-btn dataset-analytics-page__action-btn--active">
+              Аналитика
+            </button>
+            <button
+              className="dataset-analytics-page__action-btn"
+              onClick={() => navigate(`/profile/datasets/${datasetId}/edit`)}
+            >
+              Работа с датасетом
+            </button>
+            <button className="dataset-analytics-page__export-btn">
+              Export
+            </button>
+          </div>
         </div>
 
         <section className="dataset-analytics-page__section">

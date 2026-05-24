@@ -11,6 +11,11 @@ import MyDatasetsPage from "./pages/MyDatasetsPage";
 import StarsPage from "./pages/StarsPage";
 import CreateDatasetPage from "./pages/CreateDatasetPage";
 import DatasetAnalyticsPage from "./pages/DatasetAnalyticsPage";
+import DatasetEditPage from "./pages/DatasetEditPage";
+import CollaboratorsPage from "./pages/CollaboratorsPage";
+import ControversialLabelsPage from "./pages/ControversialLabelsPage";
+import PoorQualityFilesPage from "./pages/PoorQualityFilesPage";
+import DuplicatesPage from "./pages/DuplicatesPage";
 import { useAuthStore } from "./store/authStore";
 
 const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
@@ -57,6 +62,51 @@ function App() {
           element={
             <PrivateRoute>
               <DatasetAnalyticsPage />
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/profile/datasets/:id/edit"
+          element={
+            <PrivateRoute>
+              <DatasetEditPage />
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/profile/datasets/:id/collaborators"
+          element={
+            <PrivateRoute>
+              <CollaboratorsPage />
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/profile/datasets/:id/controversial"
+          element={
+            <PrivateRoute>
+              <ControversialLabelsPage />
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/profile/datasets/:id/poor-quality"
+          element={
+            <PrivateRoute>
+              <PoorQualityFilesPage />
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/profile/datasets/:id/duplicates"
+          element={
+            <PrivateRoute>
+              <DuplicatesPage />
             </PrivateRoute>
           }
         />

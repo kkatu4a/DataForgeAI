@@ -95,6 +95,7 @@ export const fileAPI = {
         });
     },
 };
+// Добавить в datasetAPI
 export const datasetAPI = {
     create: async (data: {
         name: string;
@@ -112,8 +113,32 @@ export const datasetAPI = {
         return response.data;
     },
 
+    getDatasetById: async (datasetId: number): Promise<Dataset> => {
+        const response = await apiClient.get(`/v1/datasitory/${datasetId}`);
+        return response.data;
+    },
+
+    update: async (datasetId: number, data: {
+        name: string;
+        description?: string;
+        visibility: 'PUBLIC' | 'PRIVATE';
+    }): Promise<Dataset> => {
+        const requestData = {
+            name: data.name,
+            description: data.description || "",
+            datasitoryType: data.visibility === 'PUBLIC' ? 'OPEN' : 'PRIVATE',
+        };
+        const response = await apiClient.put(`/v1/datasitory/${datasetId}`, requestData);
+        return response.data;
+    },
+
     delete: async (datasetId: number): Promise<void> => {
         await apiClient.delete(`/v1/datasitory/${datasetId}`);
+    },
+    
+    getMyDatasets: async (): Promise<Dataset[]> => {
+        const response = await apiClient.get('/v1/datasitory/my');
+        return response.data;
     },
 };
 

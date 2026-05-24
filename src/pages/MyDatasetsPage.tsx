@@ -7,7 +7,6 @@ import ProfileHeader from "../components/ProfileHeader";
 import MyDatasetsList from "../components/MyDatasetsList";
 import type { User, Dataset } from "../types/types";
 import type { apiError } from "../types/apiError";
-import './MyDatasetsPage.scss';
 
 const MyDatasetsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -17,21 +16,25 @@ const MyDatasetsPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
-    if (!authService.isAuthenticated()) {
-      navigate("/login");
-      return;
-    }
+    let isMounted = true;
 
     const fetchData = async () => {
-      setIsLoading(true);
+      if (!isMounted) return;
+
       try {
         const [userData, datasetsData] = await Promise.all([
           userAPI.getMe(),
           userAPI.getMyDatasets(),
         ]);
-        setUser(userData);
-        setDatasets(datasetsData);
+
+        if (isMounted) {
+          setUser(userData);
+          setDatasets(datasetsData);
+          setIsLoading(false);
+        }
       } catch (error) {
+        if (!isMounted) return;
+
         const apiError = error as apiError;
         if (apiError.messages) {
           apiError.messages.forEach((msg) => toast.error(msg));
@@ -42,13 +45,27 @@ const MyDatasetsPage: React.FC = () => {
           authService.logout();
           navigate("/login");
         }
-      } finally {
         setIsLoading(false);
       }
     };
 
+    if (!authService.isAuthenticated()) {
+      navigate("/login");
+      return;
+    }
+
     fetchData();
+
+    return () => {
+      isMounted = false;
+    };
   }, [navigate]);
+
+  const handleDatasetDelete = (deletedId: number) => {
+    setDatasets((prevDatasets) =>
+      prevDatasets.filter((dataset) => dataset.id !== deletedId),
+    );
+  };
 
   const filteredDatasets = datasets.filter(
     (dataset) =>
@@ -73,7 +90,11 @@ const MyDatasetsPage: React.FC = () => {
       />
 
       <div className="my-datasets-page__content">
-        <MyDatasetsList datasets={filteredDatasets} searchQuery={searchQuery} />
+        <MyDatasetsList
+          datasets={filteredDatasets}
+          searchQuery={searchQuery}
+          onDatasetDelete={handleDatasetDelete}
+        />
       </div>
     </div>
   );
