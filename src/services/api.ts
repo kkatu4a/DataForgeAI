@@ -57,40 +57,40 @@ export const userAPI = {
 
 // fileAPI
 export const fileAPI = {
-    // загрузка изображений POST /files/images/{id}
+    // загрузка изображений POST /api/v1/files/images/{id}
     uploadImages: async (datasetId: number, files: File[]): Promise<void> => {
         const formData = new FormData();
         files.forEach(file => {
             formData.append('files', file);
         });
-        await apiClient.post(`/files/images/${datasetId}`, formData, {
+        await apiClient.post(`/v1/files/images/${datasetId}`, formData, {
             headers: { 'Content-Type': 'multipart/form-data' }
         });
     },
 
-    // загрузка файла разметки (метки) POST /files/markup/{id}
+    // загрузка файла разметки (метки) POST /api/v1/files/markup/{id}
     uploadMarkup: async (datasetId: number, file: File): Promise<void> => {
         const formData = new FormData();
         formData.append('file', file);
-        await apiClient.post(`/files/markup/${datasetId}`, formData, {
+        await apiClient.post(`/v1/files/markup/${datasetId}`, formData, {
             headers: { 'Content-Type': 'multipart/form-data' }
         });
     },
 
-    // загрузка файла вероятностей POST /files/probability/{id}
+    // загрузка файла вероятностей POST /api/v1/files/probability/{id}
     uploadProbability: async (datasetId: number, file: File): Promise<void> => {
         const formData = new FormData();
         formData.append('file', file);
-        await apiClient.post(`/files/probability/${datasetId}`, formData, {
+        await apiClient.post(`/v1/files/probability/${datasetId}`, formData, {
             headers: { 'Content-Type': 'multipart/form-data' }
         });
     },
 
-    // загрузка метаданных POST /files/metadata/{id}
+    // загрузка метаданных POST /api/v1/files/metadata/{id}
     uploadMetadata: async (datasetId: number, file: File): Promise<void> => {
         const formData = new FormData();
         formData.append('file', file);
-        await apiClient.post(`/files/metadata/${datasetId}`, formData, {
+        await apiClient.post(`/v1/files/metadata/${datasetId}`, formData, {
             headers: { 'Content-Type': 'multipart/form-data' }
         });
     },
@@ -100,9 +100,20 @@ export const datasetAPI = {
         name: string;
         description?: string;
         visibility: 'PUBLIC' | 'PRIVATE';
+        creatorId: number;
     }): Promise<Dataset> => {
-        const response = await apiClient.post('/v1/datasitory', data);
+        const requestData = {
+            name: data.name,
+            description: data.description || "",
+            datasitoryType: data.visibility === 'PUBLIC' ? 'OPEN' : 'PRIVATE',
+            creatorId: data.creatorId
+        };
+        const response = await apiClient.post('/v1/datasitory', requestData);
         return response.data;
+    },
+
+    delete: async (datasetId: number): Promise<void> => {
+        await apiClient.delete(`/v1/datasitory/${datasetId}`);
     },
 };
 

@@ -10,9 +10,9 @@ import ProfilePage from "./pages/ProfilePage";
 import MyDatasetsPage from "./pages/MyDatasetsPage";
 import StarsPage from "./pages/StarsPage";
 import CreateDatasetPage from "./pages/CreateDatasetPage";
+import DatasetAnalyticsPage from "./pages/DatasetAnalyticsPage";
 import { useAuthStore } from "./store/authStore";
 
-// Компонент для защиты приватных маршрутов
 const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated } = useAuthStore();
   return isAuthenticated ? children : <Navigate to="/login" />;
@@ -22,11 +22,9 @@ function App() {
   return (
     <Router>
       <Routes>
-        {/* Публичные маршруты */}
         <Route path="/register" element={<RegistrationPage />} />
         <Route path="/login" element={<AuthPage />} />
 
-        {/* Приватные маршруты (требуют авторизации) */}
         <Route
           path="/profile"
           element={
@@ -45,12 +43,20 @@ function App() {
           }
         />
 
-        {/* Новый маршрут для создания датасета */}
         <Route
           path="/profile/datasets/create"
           element={
             <PrivateRoute>
               <CreateDatasetPage />
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/profile/datasets/:id/analytics"
+          element={
+            <PrivateRoute>
+              <DatasetAnalyticsPage />
             </PrivateRoute>
           }
         />
@@ -64,7 +70,6 @@ function App() {
           }
         />
 
-        {/* Перенаправление */}
         <Route path="/" element={<Navigate to="/profile" />} />
       </Routes>
     </Router>

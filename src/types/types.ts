@@ -58,6 +58,75 @@ export interface FileInfoResponse {
     createdAt: string;
 }
 
+export interface GeneralAnalytics {
+    readinessLevel: number;
+    totalObjects: number;
+    totalClasses: number;
+}
+
+export interface ClassData {
+    name: string;
+    value: number;
+    count: number;
+    deficit: number;
+}
+
+export interface AnalyticsObject {
+    id: number;
+    imageUrl: string;
+    tag: string;
+    entropy: number;
+    confidence: number;
+    errorProbability: number;
+    novelty: number;
+    usefulness: number;
+}
+
+export interface ReliableData {
+    id: number;
+    imageUrl: string;
+    usefulness: number;
+    tag: string;
+}
+
+export interface ControversialObject {
+    id: number;
+    imageUrl: string;
+    userLabel: string;
+    modelLabel: string;
+}
+
+export interface DuplicateGroup {
+    groupName: string;
+    images: string[];
+}
+
+export interface PoorQualityFile {
+    id: number;
+    imageUrl: string;
+    reason: string;
+}
+
+export interface Roadmap {
+    text: string;
+}
+
+export interface AnalyticsResponse {
+    general: GeneralAnalytics;
+    classData: ClassData[];
+    objects: AnalyticsObject[];
+    reliableData: ReliableData[];
+    controversialObjects: ControversialObject[];
+    duplicateGroups: DuplicateGroup[];
+    poorQualityFiles: PoorQualityFile[];
+    roadmap: Roadmap;
+}
+
+export interface BrokenFile {
+    name: string;
+    reason: string;
+}
+
 // можно оставить на будущее или удалить
 
 // export interface UploadImagesParams {

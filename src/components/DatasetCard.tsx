@@ -1,12 +1,15 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import type { Dataset } from "../types/types";
-import './DatasetCard.scss';
+import "./DatasetCard.scss";
 
 interface DatasetCardProps {
   dataset: Dataset;
   showCreator?: boolean;
   onStarClick?: () => void;
   isStarred?: boolean;
+  onDeleteClick?: () => void;
+  showAnalyticsButton?: boolean;
 }
 
 const DatasetCard: React.FC<DatasetCardProps> = ({
@@ -14,13 +17,21 @@ const DatasetCard: React.FC<DatasetCardProps> = ({
   showCreator = true,
   onStarClick,
   isStarred,
+  onDeleteClick,
+  showAnalyticsButton = true,
 }) => {
+  const navigate = useNavigate();
+
   const formatDate = (dateString: string): string => {
     return new Date(dateString).toLocaleDateString("ru-RU", {
       day: "2-digit",
       month: "2-digit",
       year: "numeric",
     });
+  };
+
+  const handleGoToAnalytics = () => {
+    navigate(`/profile/datasets/${dataset.id}/analytics`);
   };
 
   return (
@@ -37,18 +48,31 @@ const DatasetCard: React.FC<DatasetCardProps> = ({
         </span>
       </div>
       {showCreator && (
-        <div className="dataset-card__creator">
-          {dataset.creator.username}
-        </div>
+        <div className="dataset-card__creator">{dataset.creator.username}</div>
       )}
-      {onStarClick && (
-        <button
-          className={`dataset-card__star-btn ${isStarred ? "dataset-card__star-btn--active" : ""}`}
-          onClick={onStarClick}
-        >
-          {isStarred ? "★ Удалить из звёзд" : "☆ В избранное"}
-        </button>
-      )}
+      <div className="dataset-card__actions">
+        {showAnalyticsButton && (
+          <button
+            className="dataset-card__analytics-btn"
+            onClick={handleGoToAnalytics}
+          >
+            Перейти в датасет
+          </button>
+        )}
+        {onStarClick && (
+          <button
+            className={`dataset-card__star-btn ${isStarred ? "dataset-card__star-btn--active" : ""}`}
+            onClick={onStarClick}
+          >
+            {isStarred ? "★ Удалить из звёзд" : "☆ В избранное"}
+          </button>
+        )}
+        {onDeleteClick && (
+          <button className="dataset-card__delete-btn" onClick={onDeleteClick}>
+            Удалить датасет
+          </button>
+        )}
+      </div>
     </div>
   );
 };

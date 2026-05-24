@@ -84,6 +84,7 @@ const CreateDatasetPage: React.FC = () => {
         name,
         description: description || undefined,
         visibility,
+        creatorId: user!.id,
       });
 
       const datasetId = newDataset.id;
