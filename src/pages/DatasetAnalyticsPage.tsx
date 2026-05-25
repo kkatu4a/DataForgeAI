@@ -15,7 +15,7 @@ import { datasetAPI } from "../services/api";
 import type { AnalyticsResponse, Dataset } from "../types/types";
 import type { apiError } from "../types/apiError";
 import ExportIcon from "../assets/icons/Export.svg";
-import './DataAnalyticsPage.scss';
+import "./DataAnalyticsPage.scss";
 
 const DatasetAnalyticsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -27,8 +27,11 @@ const DatasetAnalyticsPage: React.FC = () => {
   const [analytics, setAnalytics] = useState<AnalyticsResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let isMounted = true;
+
     if (!authService.isAuthenticated()) {
       navigate("/login");
       return;
@@ -37,7 +40,7 @@ const DatasetAnalyticsPage: React.FC = () => {
     const fetchUser = async () => {
       try {
         const userData = await authService.fetchCurrentUser();
-        if (userData && userData.id !== -1) {
+        if (isMounted && userData && userData.id !== -1) {
           setUser(userData);
         }
       } catch (error) {
@@ -48,43 +51,88 @@ const DatasetAnalyticsPage: React.FC = () => {
     const fetchDataset = async () => {
       try {
         const data = await datasetAPI.getDatasetById(datasetId);
-        setDataset(data);
+        if (isMounted) {
+          setDataset(data);
+        }
       } catch (error) {
         console.error("Ошибка загрузки датасета", error);
+        if (isMounted) {
+          setError("Не удалось загрузить информацию о датасете");
+        }
       }
     };
 
     const fetchAnalytics = async () => {
       try {
         const data = await analyticsAPI.getAnalytics(datasetId);
-        setAnalytics(data);
+        if (isMounted) {
+          setAnalytics(data);
+        }
       } catch (error) {
         const apiError = error as apiError;
-        if (apiError.messages && apiError.messages.length > 0) {
-          apiError.messages.forEach((msg: string) => toast.error(msg));
-        } else {
-          toast.error("Ошибка загрузки аналитики");
+        if (isMounted) {
+          if (apiError.messages && apiError.messages.length > 0) {
+            setError(apiError.messages[0]);
+          } else {
+            setError("Ошибка загрузки аналитики");
+          }
         }
-      } finally {
+      }
+    };
+
+    const loadAllData = async () => {
+      setIsLoading(true);
+      setError(null);
+
+      await Promise.all([fetchUser(), fetchDataset(), fetchAnalytics()]);
+
+      if (isMounted) {
         setIsLoading(false);
       }
     };
 
-    fetchUser();
-    fetchDataset();
-    fetchAnalytics();
+    loadAllData();
+
+    return () => {
+      isMounted = false;
+    };
   }, [navigate, datasetId]);
 
   const handleBack = () => {
     navigate("/profile/datasets");
   };
 
+  const handleLogout = () => {
+    authService.logout();
+    toast.success("Вы вышли из системы");
+    navigate("/login");
+  };
+
   if (isLoading) {
-    return <div className="loading">Загрузка аналитики...</div>;
+    return (
+      <div className="loading">
+        <div className="loading__container">
+          <div className="loading__spinner"></div>
+          <p className="loading__message">Загрузка...</p>
+        </div>
+      </div>
+    );
   }
 
-  if (!analytics || !dataset) {
-    return <div className="error">Не удалось загрузить данные</div>;
+  if (error || !analytics || !dataset) {
+    return (
+      <div className="error">
+        <div className="error__container">
+          <p className="error__message">
+            {error ||
+              "Не удалось загрузить данные. Перезагрузите или перезайдите в аккаунт."}
+          </p>
+          <button className="error__button" onClick={handleLogout}>
+            Выйти
+          </button>
+        </div>
+      </div>
+    );
   }
 
   const visibilityText = dataset.type === "OPEN" ? "Публичный" : "Приватный";

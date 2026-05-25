@@ -89,11 +89,35 @@ const StarsPage: React.FC = () => {
   );
 
   if (isLoading) {
-    return <div className="loading">Загрузка...</div>;
+    return (
+      <div className="loading">
+        <div className="loading__container">
+          <div className="loading__spinner"></div>
+          <p className="loading__message">Загрузка...</p>
+        </div>
+      </div>
+    );
   }
 
+  const handleLogout = () => {
+    authService.logout();
+    toast.success("Вы вышли из системы");
+    navigate("/login");
+  };
+
   if (!user) {
-    return <div className="error">Не удалось загрузить данные</div>;
+    return (
+      <div className="error">
+        <div className="error__container">
+          <p className="error__message">
+            Не удалось загрузить данные. Перезагрузите или перезайдите в аккаунт.
+          </p>
+          <button className="error__button" onClick={handleLogout}>
+            Выйти
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (

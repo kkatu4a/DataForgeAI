@@ -129,7 +129,14 @@ const CreateDatasetPage: React.FC = () => {
   };
 
   if (!user) {
-    return <div className="loading">Загрузка...</div>;
+    return (
+      <div className="loading">
+        <div className="loading__container">
+          <div className="loading__spinner"></div>
+          <p className="loading__message">Загрузка...</p>
+        </div>
+      </div>
+    );
   }
 
   return (

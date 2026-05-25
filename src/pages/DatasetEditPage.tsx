@@ -232,7 +232,14 @@ const DatasetEditPage: React.FC = () => {
   };
 
   if (!dataset) {
-    return <div className="loading">Загрузка...</div>;
+    return (
+      <div className="loading">
+        <div className="loading__container">
+          <div className="loading__spinner"></div>
+          <p className="loading__message">Загрузка...</p>
+        </div>
+      </div>
+    );
   }
 
   const visibilityText = dataset.type === "OPEN" ? "Публичный" : "Приватный";
