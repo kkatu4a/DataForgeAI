@@ -1,5 +1,6 @@
 import React from "react";
 import type { BrokenFile } from "../types/types";
+import './BrokenFilesModal.scss';
 
 interface BrokenFilesModalProps {
   isOpen: boolean;

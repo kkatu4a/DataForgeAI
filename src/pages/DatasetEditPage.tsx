@@ -12,6 +12,8 @@ import { authService } from "../services/authService";
 import type { Dataset } from "../types/types";
 import type { apiError } from "../types/apiError";
 import type { BrokenFile } from "../types/types";
+import ExportIcon from "../assets/icons/Export.svg";
+import './DatasetEditPage.scss';
 
 interface FileUploadState {
   photos: File[];
@@ -270,7 +272,9 @@ const DatasetEditPage: React.FC = () => {
             <button className="dataset-edit-page__action-btn dataset-edit-page__action-btn--active">
               Работа с датасетом
             </button>
-            <button className="dataset-edit-page__export-btn">Export</button>
+            <button className="dataset-edit-page__export-btn">
+              <img src={ExportIcon} alt="Export icon" />
+            </button>
           </div>
         </div>
 

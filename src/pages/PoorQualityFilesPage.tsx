@@ -6,6 +6,8 @@ import DatasetNavigation from "../components/DatasetNavigation";
 import { authService } from "../services/authService";
 import { datasetAPI } from "../services/api";
 import type { Dataset } from "../types/types";
+import ExportIcon from "../assets/icons/Export.svg";
+import './PoorQualityFilesPage.scss';
 
 interface PoorQualityItem {
   id: number;
@@ -171,7 +173,7 @@ const PoorQualityFilesPage: React.FC = () => {
               Работа с датасетом
             </button>
             <button className="poor-quality-files-page__export-btn">
-              Export
+              <img src={ExportIcon} alt="Export icon" />
             </button>
           </div>
         </div>

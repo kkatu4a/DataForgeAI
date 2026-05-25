@@ -14,6 +14,7 @@ import { authService } from "../services/authService";
 import { datasetAPI } from "../services/api";
 import type { AnalyticsResponse, Dataset } from "../types/types";
 import type { apiError } from "../types/apiError";
+import ExportIcon from "../assets/icons/Export.svg";
 import './DataAnalyticsPage.scss';
 
 const DatasetAnalyticsPage: React.FC = () => {
@@ -122,7 +123,7 @@ const DatasetAnalyticsPage: React.FC = () => {
               Работа с датасетом
             </button>
             <button className="dataset-analytics-page__export-btn">
-              Export
+              <img src={ExportIcon} alt="Export icon" />
             </button>
           </div>
         </div>
