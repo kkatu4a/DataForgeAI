@@ -16,7 +16,6 @@ const StarsPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Выносим fetchFavorites за пределы эффекта
   const fetchFavorites = async () => {
     try {
       const data = await favoriteAPI.getMyFavorites();
@@ -71,7 +70,7 @@ const StarsPage: React.FC = () => {
       setFavorites((prev) =>
         prev.filter((dataset) => dataset.id !== datasetId),
       );
-      toast.success("Датасет удалён из избранного");
+      toast.success("Датазиторий удалён из избранного");
     } catch (error) {
       const apiError = error as apiError;
       if (apiError.messages && apiError.messages.length > 0) {
@@ -130,14 +129,14 @@ const StarsPage: React.FC = () => {
 
       <div className="stars-page__content">
         <div className="stars-page__header">
-          <h1 className="stars-page__title">Избранные датасеты</h1>
+          <h1 className="stars-page__title">Избранные датазитории</h1>
         </div>
 
         {filteredFavorites.length === 0 ? (
           <p className="stars-page__empty">
             {searchQuery
               ? `Ничего не найдено по запросу "${searchQuery}"`
-              : "У вас пока нет избранных датасетов"}
+              : "У вас пока нет избранных датазиториев"}
           </p>
         ) : (
           <div className="stars-page__list">

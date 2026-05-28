@@ -61,12 +61,12 @@ const MyDatasetsList: React.FC<MyDatasetsListProps> = ({
   const handleDeleteDataset = async (datasetId: number) => {
     if (
       window.confirm(
-        "Вы уверены, что хотите удалить этот датасет? Это действие необратимо.",
+        "Вы уверены, что хотите удалить этот датазиторий? Это действие необратимо.",
       )
     ) {
       try {
         await datasetAPI.delete(datasetId);
-        toast.success("Датасет успешно удалён");
+        toast.success("Датазиторий успешно удалён");
         if (onDatasetDelete) {
           onDatasetDelete(datasetId);
         }
@@ -75,7 +75,7 @@ const MyDatasetsList: React.FC<MyDatasetsListProps> = ({
         if (apiError.messages && apiError.messages.length > 0) {
           apiError.messages.forEach((msg: string) => toast.error(msg));
         } else {
-          toast.error("Ошибка удаления датасета");
+          toast.error("Ошибка удаления датазитория");
         }
       }
     }
@@ -101,7 +101,7 @@ const MyDatasetsList: React.FC<MyDatasetsListProps> = ({
           );
           return newSet;
         });
-        toast.success("Датасет удалён из избранного");
+        toast.success("Датазиторий удалён из избранного");
       } else {
         console.log("Добавляем в избранное:", datasetId);
         await favoriteAPI.addToFavorites(datasetId);
@@ -113,7 +113,7 @@ const MyDatasetsList: React.FC<MyDatasetsListProps> = ({
           );
           return newSet;
         });
-        toast.success("Датасет добавлен в избранное");
+        toast.success("Датазиторий добавлен в избранное");
       }
       if (onFavoritesChange) {
         onFavoritesChange();
@@ -129,19 +129,16 @@ const MyDatasetsList: React.FC<MyDatasetsListProps> = ({
     }
   };
 
-  // Логируем текущее состояние перед рендером
-  console.log("Рендер MyDatasetsList, избранные ID:", Array.from(favoritesIds));
-
   if (datasets.length === 0) {
     return (
       <div className="my-datasets">
         <div className="my-datasets__header">
-          <h3 className="my-datasets__title">Мои датасеты</h3>
+          <h3 className="my-datasets__title">Мои датазитории</h3>
           <button
             className="my-datasets__create-btn"
             onClick={handleCreateDataset}
           >
-            Создать датасет
+            Создать датазиторий
           </button>
         </div>
         {searchQuery ? (
@@ -149,7 +146,7 @@ const MyDatasetsList: React.FC<MyDatasetsListProps> = ({
             Ничего не найдено по запросу "{searchQuery}"
           </p>
         ) : (
-          <p className="my-datasets__empty">У вас пока нет датасетов</p>
+          <p className="my-datasets__empty">У вас пока нет датазиториев</p>
         )}
       </div>
     );
@@ -158,20 +155,19 @@ const MyDatasetsList: React.FC<MyDatasetsListProps> = ({
   return (
     <div className="my-datasets">
       <div className="my-datasets__header">
-        <h3 className="my-datasets__title">Мои датасеты ({datasets.length})</h3>
+        <h3 className="my-datasets__title">
+          Мои датазитории ({datasets.length})
+        </h3>
         <button
           className="my-datasets__create-btn"
           onClick={handleCreateDataset}
         >
-          Создать датасет
+          Создать датазиторий
         </button>
       </div>
       <div className="my-datasets__list">
         {datasets.map((dataset) => {
           const isStarred = favoritesIds.has(dataset.id);
-          console.log(
-            `Датасет ${dataset.id} (${dataset.name}): isStarred = ${isStarred}`,
-          );
           return (
             <DatasetCard
               key={dataset.id}

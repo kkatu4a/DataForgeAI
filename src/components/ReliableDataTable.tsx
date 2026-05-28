@@ -1,19 +1,19 @@
 import React, { useState, useMemo } from "react";
-import type { ReliableData } from "../types/types";
-import './ReliableDataTable.scss';
+import type { ReliableObject } from "../types/types";
+import "./ReliableDataTable.scss";
 
 interface ReliableDataTableProps {
-  data: ReliableData[];
+  data: ReliableObject[];
 }
 
 const ReliableDataTable: React.FC<ReliableDataTableProps> = ({ data }) => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [sortField, setSortField] = useState<keyof ReliableData | null>(null);
+  const [sortField, setSortField] = useState<keyof ReliableObject | null>(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  const handleSort = (field: keyof ReliableData) => {
+  const handleSort = (field: keyof ReliableObject) => {
     if (sortField === field) {
       setSortDirection(sortDirection === "asc" ? "desc" : "asc");
     } else {
@@ -25,7 +25,9 @@ const ReliableDataTable: React.FC<ReliableDataTableProps> = ({ data }) => {
   const filteredData = useMemo(() => {
     if (!searchQuery) return data;
     return data.filter((item) =>
-      item.tag?.toLowerCase().includes(searchQuery.toLowerCase()),
+      item.tags?.some((tag) =>
+        tag.toLowerCase().includes(searchQuery.toLowerCase()),
+      ),
     );
   }, [data, searchQuery]);
 
@@ -58,7 +60,7 @@ const ReliableDataTable: React.FC<ReliableDataTableProps> = ({ data }) => {
         <input
           type="text"
           className="reliable-data-table__search"
-          placeholder="Поиск по тегу..."
+          placeholder="Поиск по тегам..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
@@ -67,34 +69,34 @@ const ReliableDataTable: React.FC<ReliableDataTableProps> = ({ data }) => {
         <table className="reliable-data-table__table">
           <thead>
             <tr>
-              <th onClick={() => handleSort("imageUrl")}>
+              <th onClick={() => handleSort("url")}>
                 Объект
-                {sortField === "imageUrl" &&
-                  (sortDirection === "asc" ? " ↑" : " ↓")}
+                {sortField === "url" && (sortDirection === "asc" ? " ↑" : " ↓")}
               </th>
-              <th onClick={() => handleSort("usefulness")}>
+              <th onClick={() => handleSort("utility_score")}>
                 Полезность дообучения
-                {sortField === "usefulness" &&
+                {sortField === "utility_score" &&
                   (sortDirection === "asc" ? " ↑" : " ↓")}
               </th>
-              <th onClick={() => handleSort("tag")}>
-                Тег
-                {sortField === "tag" && (sortDirection === "asc" ? " ↑" : " ↓")}
+              <th onClick={() => handleSort("tags")}>
+                Теги
+                {sortField === "tags" &&
+                  (sortDirection === "asc" ? " ↑" : " ↓")}
               </th>
             </tr>
           </thead>
           <tbody>
-            {paginatedData.map((item) => (
-              <tr key={item.id}>
+            {paginatedData.map((item, index) => (
+              <tr key={index}>
                 <td>
                   <img
-                    src={item.imageUrl}
-                    alt={`reliable-${item.id}`}
+                    src={item.url}
+                    alt={`reliable-${index}`}
                     className="reliable-data-table__thumbnail"
                   />
                 </td>
-                <td>{item.usefulness}</td>
-                <td>{item.tag}</td>
+                <td>{item.utility_score}</td>
+                <td>{item.tags?.join(", ")}</td>
               </tr>
             ))}
           </tbody>

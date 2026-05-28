@@ -4,10 +4,12 @@ import toast from "react-hot-toast";
 import ProfileHeader from "../components/ProfileHeader";
 import DatasetNavigation from "../components/DatasetNavigation";
 import { authService } from "../services/authService";
-import { datasetAPI } from "../services/api";
-import type { Dataset } from "../types/types";
+import { datasetAPI, markupAPI } from "../services/api";
+import { analyticsAPI } from "../services/analyticsAPI";
+import type { Dataset, FileToUpdate, LabelIssue } from "../types/types";
+import type { apiError } from "../types/apiError";
 import ExportIcon from "../assets/icons/Export.svg";
-import './ControversialLabelsPage.scss';
+import "./ControversialLabelsPage.scss";
 
 interface ControversialItem {
   id: number;
@@ -15,6 +17,7 @@ interface ControversialItem {
   userLabel: string;
   modelLabel: string;
   finalLabel: string;
+  fileName: string;
 }
 
 const ControversialLabelsPage: React.FC = () => {
@@ -27,6 +30,8 @@ const ControversialLabelsPage: React.FC = () => {
   const [items, setItems] = useState<ControversialItem[]>([]);
   const [availableClasses, setAvailableClasses] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isExporting, setIsExporting] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (!authService.isAuthenticated()) {
@@ -54,45 +59,43 @@ const ControversialLabelsPage: React.FC = () => {
       }
     };
 
+    const fetchClasses = async () => {
+      try {
+        const analytics = await analyticsAPI.getAnalytics(datasetId);
+        const classNames = analytics.summary.classes.map((c) => c.name);
+        setAvailableClasses(classNames);
+      } catch (error) {
+        console.error("Ошибка загрузки классов", error);
+        setAvailableClasses([]);
+      }
+    };
+
     const fetchControversialData = async () => {
-      // TODO: заменить на реальный API
-      setItems([
-        {
-          id: 1,
-          imageUrl: "https://picsum.photos/id/10/100/100",
-          userLabel: "car",
-          modelLabel: "truck",
-          finalLabel: "car",
-        },
-        {
-          id: 2,
-          imageUrl: "https://picsum.photos/id/11/100/100",
-          userLabel: "dog",
-          modelLabel: "wolf",
-          finalLabel: "dog",
-        },
-        {
-          id: 3,
-          imageUrl: "https://picsum.photos/id/12/100/100",
-          userLabel: "cat",
-          modelLabel: "fox",
-          finalLabel: "cat",
-        },
-      ]);
-      setAvailableClasses([
-        "car",
-        "truck",
-        "dog",
-        "wolf",
-        "cat",
-        "fox",
-        "bird",
-        "bicycle",
-      ]);
+      try {
+        const analytics = await analyticsAPI.getAnalytics(datasetId);
+        const labelIssues: LabelIssue[] = analytics.groups.label_issues || [];
+
+        const transformedItems: ControversialItem[] = labelIssues.map(
+          (issue, index) => ({
+            id: index + 1,
+            imageUrl: issue.url,
+            userLabel: issue.old_label_name,
+            modelLabel: issue.suggested_label_name,
+            finalLabel: issue.old_label_name,
+            fileName: issue.file_name,
+          }),
+        );
+
+        setItems(transformedItems);
+      } catch (error) {
+        console.error("Ошибка загрузки спорных меток", error);
+        setItems([]);
+      }
     };
 
     fetchUser();
     fetchDataset();
+    fetchClasses();
     fetchControversialData();
   }, [navigate, datasetId]);
 
@@ -115,8 +118,68 @@ const ControversialLabelsPage: React.FC = () => {
   };
 
   const handleSaveAll = async () => {
-    // TODO: отправить все finalLabel на бэкенд
-    toast.success("Изменения сохранены");
+    const changedItems = items.filter(
+      (item) => item.finalLabel !== item.userLabel,
+    );
+
+    if (changedItems.length === 0) {
+      toast("Нет изменений для сохранения");
+      return;
+    }
+
+    const filesToUpdate: FileToUpdate[] = changedItems.map((item) => ({
+      fileName: item.fileName,
+      newLabel: item.finalLabel,
+    }));
+
+    const request = { filesToUpdate };
+
+    setIsSaving(true);
+    try {
+      await markupAPI.updateMarkupLines(datasetId, request);
+      toast.success(`Сохранено ${changedItems.length} изменений`);
+
+      setItems(
+        items.map((item) => ({
+          ...item,
+          userLabel: item.finalLabel,
+        })),
+      );
+    } catch (error) {
+      const apiError = error as apiError;
+      if (apiError.messages && apiError.messages.length > 0) {
+        apiError.messages.forEach((msg: string) => toast.error(msg));
+      } else {
+        toast.error("Ошибка сохранения изменений");
+      }
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleExport = async () => {
+    setIsExporting(true);
+    try {
+      const blob = await datasetAPI.exportDataset(datasetId);
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `dataset_${datasetId}.zip`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      toast.success("Экспорт датасета начался");
+    } catch (error) {
+      const apiError = error as apiError;
+      if (apiError.messages && apiError.messages.length > 0) {
+        apiError.messages.forEach((msg: string) => toast.error(msg));
+      } else {
+        toast.error("Ошибка экспорта датасета");
+      }
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   if (!dataset) {
@@ -167,7 +230,11 @@ const ControversialLabelsPage: React.FC = () => {
             <button className="controversial-labels-page__action-btn controversial-labels-page__action-btn--active">
               Работа с датасетом
             </button>
-            <button className="controversial-labels-page__export-btn">
+            <button
+              className="controversial-labels-page__export-btn"
+              onClick={handleExport}
+              disabled={isExporting}
+            >
               <img src={ExportIcon} alt="Export icon" />
             </button>
           </div>
@@ -179,12 +246,14 @@ const ControversialLabelsPage: React.FC = () => {
           <button
             className="controversial-labels-page__radio-btn"
             onClick={handleKeepAllLabels}
+            disabled={isSaving}
           >
             Оставить все метки (пользовательские)
           </button>
           <button
             className="controversial-labels-page__radio-btn"
             onClick={handleConfirmAllLabels}
+            disabled={isSaving}
           >
             Подтвердить все метки (модельные)
           </button>
@@ -203,13 +272,13 @@ const ControversialLabelsPage: React.FC = () => {
             <tbody>
               {items.map((item) => (
                 <tr key={item.id}>
-                  <td>
+                  <tr>
                     <img
                       src={item.imageUrl}
                       alt={`controversial-${item.id}`}
                       className="controversial-labels-page__thumbnail"
                     />
-                  </td>
+                  </tr>
                   <td>{item.userLabel}</td>
                   <td>{item.modelLabel}</td>
                   <td>
@@ -219,6 +288,7 @@ const ControversialLabelsPage: React.FC = () => {
                       onChange={(e) =>
                         handleFinalLabelChange(item.id, e.target.value)
                       }
+                      disabled={isSaving}
                     >
                       {availableClasses.map((className) => (
                         <option key={className} value={className}>
@@ -237,8 +307,9 @@ const ControversialLabelsPage: React.FC = () => {
           <button
             className="controversial-labels-page__save-btn"
             onClick={handleSaveAll}
+            disabled={isSaving}
           >
-            Сохранить все изменения
+            {isSaving ? "Сохранение..." : "Сохранить все изменения"}
           </button>
         </div>
       </div>

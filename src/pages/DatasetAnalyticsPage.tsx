@@ -12,7 +12,7 @@ import RoadmapBlock from "../components/RoadmapBlock";
 import { analyticsAPI } from "../services/analyticsAPI";
 import { authService } from "../services/authService";
 import { datasetAPI } from "../services/api";
-import type { AnalyticsResponse, Dataset } from "../types/types";
+import type { MlAnalyticsResponse, Dataset } from "../types/types";
 import type { apiError } from "../types/apiError";
 import ExportIcon from "../assets/icons/Export.svg";
 import "./DataAnalyticsPage.scss";
@@ -24,10 +24,11 @@ const DatasetAnalyticsPage: React.FC = () => {
 
   const [user, setUser] = useState<{ username: string } | null>(null);
   const [dataset, setDataset] = useState<Dataset | null>(null);
-  const [analytics, setAnalytics] = useState<AnalyticsResponse | null>(null);
+  const [analytics, setAnalytics] = useState<MlAnalyticsResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -108,6 +109,31 @@ const DatasetAnalyticsPage: React.FC = () => {
     navigate("/login");
   };
 
+  const handleExport = async () => {
+    setIsExporting(true);
+    try {
+      const blob = await datasetAPI.exportDataset(datasetId);
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `dataset_${datasetId}.zip`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      toast.success("Экспорт датасета начался");
+    } catch (error) {
+      const apiError = error as apiError;
+      if (apiError.messages && apiError.messages.length > 0) {
+        apiError.messages.forEach((msg: string) => toast.error(msg));
+      } else {
+        toast.error("Ошибка экспорта датасета");
+      }
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="loading">
@@ -170,7 +196,11 @@ const DatasetAnalyticsPage: React.FC = () => {
             >
               Работа с датасетом
             </button>
-            <button className="dataset-analytics-page__export-btn">
+            <button
+              className="dataset-analytics-page__export-btn"
+              onClick={handleExport}
+              disabled={isExporting}
+            >
               <img src={ExportIcon} alt="Export icon" />
             </button>
           </div>
@@ -180,48 +210,45 @@ const DatasetAnalyticsPage: React.FC = () => {
           <h2 className="dataset-analytics-page__section-title">
             Общая аналитика
           </h2>
-          <GeneralAnalytics
-            general={analytics.general}
-            classData={analytics.classData}
-          />
+          <GeneralAnalytics summary={analytics.summary} />
         </section>
 
         <section className="dataset-analytics-page__section">
           <h2 className="dataset-analytics-page__section-title">Объекты</h2>
-          <ObjectsTable data={analytics.objects} />
+          <ObjectsTable data={analytics.groups.all_objects} />
         </section>
 
         <section className="dataset-analytics-page__section">
           <h2 className="dataset-analytics-page__section-title">
             Надёжные данные
           </h2>
-          <ReliableDataTable data={analytics.reliableData} />
+          <ReliableDataTable data={analytics.groups.reliable} />
         </section>
 
         <section className="dataset-analytics-page__section">
           <h2 className="dataset-analytics-page__section-title">
             Спорные метки
           </h2>
-          <ControversialObjectsTable data={analytics.controversialObjects} />
+          <ControversialObjectsTable data={analytics.groups.label_issues} />
         </section>
 
         <section className="dataset-analytics-page__section">
           <h2 className="dataset-analytics-page__section-title">Дубликаты</h2>
-          <DuplicatesGroups groups={analytics.duplicateGroups} />
+          <DuplicatesGroups groups={analytics.groups.duplicates} />
         </section>
 
         <section className="dataset-analytics-page__section">
           <h2 className="dataset-analytics-page__section-title">
             Файлы плохого качества
           </h2>
-          <PoorQualityFilesTable data={analytics.poorQualityFiles} />
+          <PoorQualityFilesTable data={analytics.groups.quality_issues} />
         </section>
 
         <section className="dataset-analytics-page__section">
           <h2 className="dataset-analytics-page__section-title">
             Дорожная карта
           </h2>
-          <RoadmapBlock text={analytics.roadmap.text} />
+          <RoadmapBlock roadmap={analytics.roadmap} />
         </section>
       </div>
     </div>

@@ -132,7 +132,6 @@ $transition-default: all 0.2s ease;
   }
 }
 
-// Группы дубликатов
 .duplicates-page__groups {
   display: flex;
   flex-direction: column;
@@ -190,6 +189,8 @@ $transition-default: all 0.2s ease;
     background: darken($color-primary-light, 5%);
   }
 }
+
+
 
 .duplicates-page__delete-btn {
   background: $color-error-light;

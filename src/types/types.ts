@@ -47,7 +47,6 @@ export interface CreateDatasetRequest {
     metadataFile?: File;
 }
 
-// ответ от File Management API
 export interface FileInfoResponse {
     id: number;
     name: string;
@@ -58,68 +57,83 @@ export interface FileInfoResponse {
     createdAt: string;
 }
 
-export interface GeneralAnalytics {
-    readinessLevel: number;
-    totalObjects: number;
-    totalClasses: number;
+export interface MlAnalyticsResponse {
+    summary: Summary;
+    groups: Groups;
+    roadmap: RoadmapItem[];
 }
 
-export interface ClassData {
+export interface Summary {
+    readiness: number;
+    n_total: number;
+    n_classes: number;
+    classes: ClassInfo[];
+}
+
+export interface ClassInfo {
+    class_idx: number;
     name: string;
-    value: number;
     count: number;
+    percentage: number;
     deficit: number;
 }
 
-export interface AnalyticsObject {
-    id: number;
-    imageUrl: string;
-    tag: string;
+export interface Groups {
+    all_objects: AllObject[];
+    reliable: ReliableObject[];
+    label_issues: LabelIssue[];
+    duplicates: DuplicateGroup[];
+    quality_issues: QualityIssue[];
+}
+
+export interface AllObject {
+    file_name: string;
+    url: string;
+    tags: string[];
+    utility_score: number;
     entropy: number;
     confidence: number;
-    errorProbability: number;
-    novelty: number;
-    usefulness: number;
+    label_score: number;
+    outlier_score: number;
 }
 
-export interface ReliableData {
-    id: number;
-    imageUrl: string;
-    usefulness: number;
-    tag: string;
+export interface ReliableObject {
+    file_name: string;
+    url: string;
+    tags: string[];
+    utility_score: number;
 }
 
-export interface ControversialObject {
-    id: number;
-    imageUrl: string;
-    userLabel: string;
-    modelLabel: string;
+export interface LabelIssue {
+    file_name: string;
+    url: string;
+    old_label: number;
+    old_label_name: string;
+    suggested_label: number;
+    suggested_label_name: string;
 }
 
 export interface DuplicateGroup {
-    groupName: string;
-    images: string[];
+    group_id: number;
+    primary: DuplicateFile;
+    copies: DuplicateFile[];
 }
 
-export interface PoorQualityFile {
+export interface DuplicateFile {
+    file_name: string;
+    url: string;
+}
+
+export interface QualityIssue {
+    file_name: string;
+    url: string;
+    tags: string[];
+    quality_score: number;
+}
+
+export interface RoadmapItem {
     id: number;
-    imageUrl: string;
-    reason: string;
-}
-
-export interface Roadmap {
-    text: string;
-}
-
-export interface AnalyticsResponse {
-    general: GeneralAnalytics;
-    classData: ClassData[];
-    objects: AnalyticsObject[];
-    reliableData: ReliableData[];
-    controversialObjects: ControversialObject[];
-    duplicateGroups: DuplicateGroup[];
-    poorQualityFiles: PoorQualityFile[];
-    roadmap: Roadmap;
+    action: string;
 }
 
 export interface BrokenFile {
@@ -127,14 +141,19 @@ export interface BrokenFile {
     reason: string;
 }
 
-// можно оставить на будущее или удалить
+export interface FileToDelete {
+    fileName: string;
+}
 
-// export interface UploadImagesParams {
-//     id: number;
-//     files: File[];
-// }
+export interface DeleteMarkupLineRequest {
+    filesToDelete: FileToDelete[];
+}
 
-// export interface UploadFileParams {
-//     id: number;
-//     file: File;
-// }
+export interface FileToUpdate {
+    fileName: string;
+    newLabel: string;
+}
+
+export interface UpdateMarkupLineRequest {
+    filesToUpdate: FileToUpdate[];
+}

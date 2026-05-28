@@ -130,7 +130,6 @@ $transition-default: all 0.2s ease;
   }
 }
 
-// Кнопки массовых действий
 .controversial-labels-page__controls {
   display: flex;
   gap: 16px;
@@ -156,7 +155,6 @@ $transition-default: all 0.2s ease;
   }
 }
 
-// Таблица
 .controversial-labels-page__table-wrapper {
   overflow-x: auto;
   border: 1px solid $color-border;
@@ -222,7 +220,6 @@ $transition-default: all 0.2s ease;
   }
 }
 
-// Кнопка сохранения
 .controversial-labels-page__save {
   margin-top: 24px;
   text-align: right;

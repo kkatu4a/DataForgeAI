@@ -15,10 +15,10 @@ const StarredDatasetsList: React.FC<StarredDatasetsListProps> = ({
   if (datasets.length === 0) {
     return (
       <div className="starred-datasets">
-        <h3 className="starred-datasets__title">Избранные датасеты</h3>
-        <p className="starred-datasets__empty">Нет избранных датасетов</p>
+        <h3 className="starred-datasets__title">Избранные датазитории</h3>
+        <p className="starred-datasets__empty">Нет избранных датазиториев</p>
         <p className="starred-datasets__hint">
-          Отмечайте датасеты звёздочкой, и они появятся здесь
+          Отмечайте датазитории звёздочкой, и они появятся здесь
         </p>
       </div>
     );
@@ -27,7 +27,7 @@ const StarredDatasetsList: React.FC<StarredDatasetsListProps> = ({
   return (
     <div className="starred-datasets">
       <h3 className="starred-datasets__title">
-        Избранные датасеты ({datasets.length})
+        Избранные датазитории ({datasets.length})
       </h3>
       <div className="starred-datasets__list">
         {datasets.map((dataset) => (

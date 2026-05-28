@@ -2,8 +2,9 @@ import axios from 'axios';
 import { authService } from './authService.ts';
 import type { User, Dataset } from '../types/types';
 import api from './api';
+import type { DeleteMarkupLineRequest, UpdateMarkupLineRequest } from '../types/types';
 
-const API_BASE_URL = 'http://82.147.67.239:8080/api';
+const API_BASE_URL = 'https://pp8jtn-128-71-239-58.ru.tuna.am/api';
 
 const apiClient = axios.create({
     baseURL: API_BASE_URL,
@@ -55,9 +56,7 @@ export const userAPI = {
 
 
 
-// fileAPI
 export const fileAPI = {
-    // загрузка изображений POST /api/v1/files/images/{id}
     uploadImages: async (datasetId: number, files: File[]): Promise<void> => {
         const formData = new FormData();
         files.forEach(file => {
@@ -68,7 +67,6 @@ export const fileAPI = {
         });
     },
 
-    // загрузка файла разметки (метки) POST /api/v1/files/markup/{id}
     uploadMarkup: async (datasetId: number, file: File): Promise<void> => {
         const formData = new FormData();
         formData.append('file', file);
@@ -77,7 +75,6 @@ export const fileAPI = {
         });
     },
 
-    // загрузка файла вероятностей POST /api/v1/files/probability/{id}
     uploadProbability: async (datasetId: number, file: File): Promise<void> => {
         const formData = new FormData();
         formData.append('file', file);
@@ -86,7 +83,6 @@ export const fileAPI = {
         });
     },
 
-    // загрузка метаданных POST /api/v1/files/metadata/{id}
     uploadMetadata: async (datasetId: number, file: File): Promise<void> => {
         const formData = new FormData();
         formData.append('file', file);
@@ -95,7 +91,6 @@ export const fileAPI = {
         });
     },
 };
-// Добавить в datasetAPI
 export const datasetAPI = {
     create: async (data: {
         name: string;
@@ -140,6 +135,12 @@ export const datasetAPI = {
         const response = await apiClient.get('/v1/datasitory/my');
         return response.data;
     },
+     exportDataset: async (datasetId: number): Promise<Blob> => {
+        const response = await apiClient.get(`/v1/datasitory/export/${datasetId}`, {
+            responseType: 'blob'
+        });
+        return response.data;
+    },
 };
 
 
@@ -162,6 +163,16 @@ export const favoriteAPI = {
         }
         console.error('getMyFavorites вернул неожиданный формат:', response.data);
         return [];
+    },
+};
+
+export const markupAPI = {
+    deleteMarkupLines: async (datasetId: number, request: DeleteMarkupLineRequest): Promise<void> => {
+        await apiClient.patch(`/v1/markup/delete/${datasetId}`, request);
+    },
+
+    updateMarkupLines: async (datasetId: number, request: UpdateMarkupLineRequest): Promise<void> => {
+        await apiClient.patch(`/v1/markup/update/${datasetId}`, request);
     },
 };
 

@@ -1,23 +1,21 @@
 import React, { useState, useMemo } from "react";
-import type { PoorQualityFile } from "../types/types";
-import './PoorQualityFilesTable.scss';
+import type { QualityIssue } from "../types/types";
+import "./PoorQualityFilesTable.scss";
 
 interface PoorQualityFilesTableProps {
-  data: PoorQualityFile[];
+  data: QualityIssue[];
 }
 
 const PoorQualityFilesTable: React.FC<PoorQualityFilesTableProps> = ({
   data,
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [sortField, setSortField] = useState<keyof PoorQualityFile | null>(
-    null,
-  );
+  const [sortField, setSortField] = useState<keyof QualityIssue | null>(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  const handleSort = (field: keyof PoorQualityFile) => {
+  const handleSort = (field: keyof QualityIssue) => {
     if (sortField === field) {
       setSortDirection(sortDirection === "asc" ? "desc" : "asc");
     } else {
@@ -29,7 +27,9 @@ const PoorQualityFilesTable: React.FC<PoorQualityFilesTableProps> = ({
   const filteredData = useMemo(() => {
     if (!searchQuery) return data;
     return data.filter((item) =>
-      item.reason?.toLowerCase().includes(searchQuery.toLowerCase()),
+      item.tags?.some((tag) =>
+        tag.toLowerCase().includes(searchQuery.toLowerCase()),
+      ),
     );
   }, [data, searchQuery]);
 
@@ -59,7 +59,7 @@ const PoorQualityFilesTable: React.FC<PoorQualityFilesTableProps> = ({
         <input
           type="text"
           className="poor-quality-files-table__search"
-          placeholder="Поиск по причине..."
+          placeholder="Поиск по тегам..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
@@ -68,29 +68,34 @@ const PoorQualityFilesTable: React.FC<PoorQualityFilesTableProps> = ({
         <table className="poor-quality-files-table__table">
           <thead>
             <tr>
-              <th onClick={() => handleSort("imageUrl")}>
+              <th onClick={() => handleSort("url")}>
                 Объект
-                {sortField === "imageUrl" &&
+                {sortField === "url" && (sortDirection === "asc" ? " ↑" : " ↓")}
+              </th>
+              <th onClick={() => handleSort("tags")}>
+                Теги
+                {sortField === "tags" &&
                   (sortDirection === "asc" ? " ↑" : " ↓")}
               </th>
-              <th onClick={() => handleSort("reason")}>
-                Причина попадания
-                {sortField === "reason" &&
+              <th onClick={() => handleSort("quality_score")}>
+                Оценка
+                {sortField === "quality_score" &&
                   (sortDirection === "asc" ? " ↑" : " ↓")}
               </th>
             </tr>
           </thead>
           <tbody>
-            {paginatedData.map((item) => (
-              <tr key={item.id}>
+            {paginatedData.map((item, index) => (
+              <tr key={index}>
                 <td>
                   <img
-                    src={item.imageUrl}
-                    alt={`poor-${item.id}`}
+                    src={item.url}
+                    alt={`poor-${index}`}
                     className="poor-quality-files-table__thumbnail"
                   />
                 </td>
-                <td>{item.reason}</td>
+                <td>{item.tags?.join(", ")}</td>
+                <td>{item.quality_score}</td>
               </tr>
             ))}
           </tbody>

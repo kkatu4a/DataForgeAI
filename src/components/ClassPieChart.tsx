@@ -1,21 +1,22 @@
 import React from "react";
 import { PieChart, Pie, Cell, Tooltip, Legend } from "recharts";
-import type { ClassData } from "../types/types";
-import './ClassPieChart.scss';
+import "./ClassPieChart.scss";
+
+interface ChartData {
+  name: string;
+  value: number;
+  count: number;
+  deficit: number;
+}
 
 interface ClassPieChartProps {
-  data: ClassData[];
+  data: ChartData[];
 }
 
 interface CustomTooltipProps {
   active?: boolean;
   payload?: Array<{
-    payload: {
-      name: string;
-      value: number;
-      count: number;
-      deficit: number;
-    };
+    payload: ChartData;
   }>;
 }
 

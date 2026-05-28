@@ -16,25 +16,21 @@ const CreateDatasetPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
-  // поля формы
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [visibility, setVisibility] = useState<"PUBLIC" | "PRIVATE">("PUBLIC");
 
-  // файлы
   const [photos, setPhotos] = useState<File[]>([]);
   const [labelsFile, setLabelsFile] = useState<File | null>(null);
   const [probabilitiesFile, setProbabilitiesFile] = useState<File | null>(null);
   const [metadataFile, setMetadataFile] = useState<File | null>(null);
 
-  // валидация
   const [errors, setErrors] = useState<{
     name?: string;
     photos?: string;
     labelsFile?: string;
   }>({});
 
-  // загрузка пользователя
   useEffect(() => {
     const fetchUser = async () => {
       try {
@@ -53,7 +49,7 @@ const CreateDatasetPage: React.FC = () => {
     const newErrors: typeof errors = {};
 
     if (!name.trim()) {
-      newErrors.name = "Название датасета обязательно";
+      newErrors.name = "Название датазитория обязательно";
     }
 
     if (photos.length === 0) {
@@ -79,7 +75,6 @@ const CreateDatasetPage: React.FC = () => {
     setIsLoading(true);
 
     try {
-      // шаг 1: создаём датасет
       const newDataset = await datasetAPI.create({
         name,
         description: description || undefined,
@@ -89,27 +84,23 @@ const CreateDatasetPage: React.FC = () => {
 
       const datasetId = newDataset.id;
 
-      // шаг 2: загружаем фотографии
       if (photos.length > 0) {
         await fileAPI.uploadImages(datasetId, photos);
       }
 
-      // шаг 3: загружаем файл с метками
       if (labelsFile) {
         await fileAPI.uploadMarkup(datasetId, labelsFile);
       }
 
-      // шаг 4: загружаем вероятности (если есть)
       if (probabilitiesFile) {
         await fileAPI.uploadProbability(datasetId, probabilitiesFile);
       }
 
-      // шаг 5: загружаем метаданные (если есть)
       if (metadataFile) {
         await fileAPI.uploadMetadata(datasetId, metadataFile);
       }
 
-      toast.success("Датасет успешно создан");
+      toast.success("Датазиторий успешно создан");
       navigate("/profile/datasets");
     } catch (error) {
       const apiError = error as apiError;
@@ -117,7 +108,7 @@ const CreateDatasetPage: React.FC = () => {
       if (apiError.messages && apiError.messages.length > 0) {
         apiError.messages.forEach((msg: string) => toast.error(msg));
       } else {
-        toast.error("Ошибка создания датасета");
+        toast.error("Ошибка создания датазитория");
       }
     } finally {
       setIsLoading(false);
@@ -160,16 +151,15 @@ const CreateDatasetPage: React.FC = () => {
         </div>
 
         <form className="create-dataset-form" onSubmit={handleSubmit}>
-          {/* Название датасета */}
           <div className="create-dataset-form__field">
             <label className="create-dataset-form__label">
-              Название датасета{" "}
+              Название датазитория{" "}
               <span className="create-dataset-form__required">*</span>
             </label>
             <input
               type="text"
               className={`create-dataset-form__input ${errors.name ? "create-dataset-form__input--error" : ""}`}
-              placeholder="Введите название датасета"
+              placeholder="Введите название датазитория"
               value={name}
               onChange={(e) => setName(e.target.value)}
               disabled={isLoading}
@@ -179,14 +169,13 @@ const CreateDatasetPage: React.FC = () => {
             )}
           </div>
 
-          {/* Описание датасета */}
           <div className="create-dataset-form__field">
             <label className="create-dataset-form__label">
-              Описание датасета
+              Описание датазитория
             </label>
             <textarea
               className="create-dataset-form__textarea"
-              placeholder="Введите описание датасета"
+              placeholder="Введите описание датазитория"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={4}

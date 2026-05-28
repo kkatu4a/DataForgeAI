@@ -1,23 +1,21 @@
 import React, { useState, useMemo } from "react";
-import type { ControversialObject } from "../types/types";
-import './ControversialObjectsTable.scss';
+import type { LabelIssue } from "../types/types";
+import "./ControversialObjectsTable.scss";
 
 interface ControversialObjectsTableProps {
-  data: ControversialObject[];
+  data: LabelIssue[];
 }
 
 const ControversialObjectsTable: React.FC<ControversialObjectsTableProps> = ({
   data,
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [sortField, setSortField] = useState<keyof ControversialObject | null>(
-    null,
-  );
+  const [sortField, setSortField] = useState<keyof LabelIssue | null>(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  const handleSort = (field: keyof ControversialObject) => {
+  const handleSort = (field: keyof LabelIssue) => {
     if (sortField === field) {
       setSortDirection(sortDirection === "asc" ? "desc" : "asc");
     } else {
@@ -30,8 +28,12 @@ const ControversialObjectsTable: React.FC<ControversialObjectsTableProps> = ({
     if (!searchQuery) return data;
     return data.filter(
       (item) =>
-        item.userLabel?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.modelLabel?.toLowerCase().includes(searchQuery.toLowerCase()),
+        item.old_label_name
+          ?.toLowerCase()
+          .includes(searchQuery.toLowerCase()) ||
+        item.suggested_label_name
+          ?.toLowerCase()
+          .includes(searchQuery.toLowerCase()),
     );
   }, [data, searchQuery]);
 
@@ -70,35 +72,34 @@ const ControversialObjectsTable: React.FC<ControversialObjectsTableProps> = ({
         <table className="controversial-objects-table__table">
           <thead>
             <tr>
-              <th onClick={() => handleSort("imageUrl")}>
+              <th onClick={() => handleSort("url")}>
                 Объект
-                {sortField === "imageUrl" &&
-                  (sortDirection === "asc" ? " ↑" : " ↓")}
+                {sortField === "url" && (sortDirection === "asc" ? " ↑" : " ↓")}
               </th>
-              <th onClick={() => handleSort("userLabel")}>
+              <th onClick={() => handleSort("old_label_name")}>
                 Метка пользователя
-                {sortField === "userLabel" &&
+                {sortField === "old_label_name" &&
                   (sortDirection === "asc" ? " ↑" : " ↓")}
               </th>
-              <th onClick={() => handleSort("modelLabel")}>
+              <th onClick={() => handleSort("suggested_label_name")}>
                 Предполагаемая метка модели
-                {sortField === "modelLabel" &&
+                {sortField === "suggested_label_name" &&
                   (sortDirection === "asc" ? " ↑" : " ↓")}
               </th>
             </tr>
           </thead>
           <tbody>
-            {paginatedData.map((item) => (
-              <tr key={item.id}>
+            {paginatedData.map((item, index) => (
+              <tr key={index}>
                 <td>
                   <img
-                    src={item.imageUrl}
-                    alt={`controversial-${item.id}`}
+                    src={item.url}
+                    alt={`controversial-${index}`}
                     className="controversial-objects-table__thumbnail"
                   />
                 </td>
-                <td>{item.userLabel}</td>
-                <td>{item.modelLabel}</td>
+                <td>{item.old_label_name}</td>
+                <td>{item.suggested_label_name}</td>
               </tr>
             ))}
           </tbody>

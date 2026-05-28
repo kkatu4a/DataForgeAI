@@ -4,22 +4,12 @@ import toast from "react-hot-toast";
 import ProfileHeader from "../components/ProfileHeader";
 import DatasetNavigation from "../components/DatasetNavigation";
 import { authService } from "../services/authService";
-import { datasetAPI } from "../services/api";
-import type { Dataset } from "../types/types";
+import { datasetAPI, markupAPI } from "../services/api";
+import { analyticsAPI } from "../services/analyticsAPI";
+import type { Dataset, DuplicateGroup, FileToDelete } from "../types/types";
+import type { apiError } from "../types/apiError";
 import ExportIcon from "../assets/icons/Export.svg";
-import './DuplicatesPage.scss';
-
-interface DuplicateObject {
-  id: number;
-  imageUrl: string;
-  isMain: boolean;
-  selected: boolean;
-}
-
-interface DuplicateGroup {
-  groupName: string;
-  objects: DuplicateObject[];
-}
+import "./DuplicatesPage.scss";
 
 const DuplicatesPage: React.FC = () => {
   const navigate = useNavigate();
@@ -30,6 +20,11 @@ const DuplicatesPage: React.FC = () => {
   const [dataset, setDataset] = useState<Dataset | null>(null);
   const [groups, setGroups] = useState<DuplicateGroup[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isExporting, setIsExporting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [selectedCopies, setSelectedCopies] = useState<
+    Map<number, Set<number>>
+  >(new Map());
 
   useEffect(() => {
     if (!authService.isAuthenticated()) {
@@ -58,49 +53,19 @@ const DuplicatesPage: React.FC = () => {
     };
 
     const fetchDuplicatesData = async () => {
-      // TODO: заменить на реальный API
-      setGroups([
-        {
-          groupName: "Дубликаты группы A",
-          objects: [
-            {
-              id: 1,
-              imageUrl: "https://picsum.photos/id/20/100/100",
-              isMain: true,
-              selected: false,
-            },
-            {
-              id: 2,
-              imageUrl: "https://picsum.photos/id/21/100/100",
-              isMain: false,
-              selected: false,
-            },
-            {
-              id: 3,
-              imageUrl: "https://picsum.photos/id/22/100/100",
-              isMain: false,
-              selected: false,
-            },
-          ],
-        },
-        {
-          groupName: "Дубликаты группы B",
-          objects: [
-            {
-              id: 4,
-              imageUrl: "https://picsum.photos/id/23/100/100",
-              isMain: true,
-              selected: false,
-            },
-            {
-              id: 5,
-              imageUrl: "https://picsum.photos/id/24/100/100",
-              isMain: false,
-              selected: false,
-            },
-          ],
-        },
-      ]);
+      try {
+        const analytics = await analyticsAPI.getAnalytics(datasetId);
+        setGroups(analytics.groups.duplicates || []);
+
+        const initialSelected = new Map<number, Set<number>>();
+        analytics.groups.duplicates?.forEach((_, groupIndex) => {
+          initialSelected.set(groupIndex, new Set());
+        });
+        setSelectedCopies(initialSelected);
+      } catch (error) {
+        console.error("Ошибка загрузки дубликатов", error);
+        setGroups([]);
+      }
     };
 
     fetchUser();
@@ -108,71 +73,137 @@ const DuplicatesPage: React.FC = () => {
     fetchDuplicatesData();
   }, [navigate, datasetId]);
 
+  const handleSelectCopy = (groupIndex: number, copyIndex: number) => {
+    setSelectedCopies((prev) => {
+      const newMap = new Map(prev);
+      const groupSet = new Set(prev.get(groupIndex));
+      if (groupSet.has(copyIndex)) {
+        groupSet.delete(copyIndex);
+      } else {
+        groupSet.add(copyIndex);
+      }
+      newMap.set(groupIndex, groupSet);
+      return newMap;
+    });
+  };
+
   const handleSelectAllInGroup = (groupIndex: number) => {
-    setGroups(
-      groups.map((group, idx) => {
-        if (idx === groupIndex) {
-          return {
-            ...group,
-            objects: group.objects.map((obj) => ({
-              ...obj,
-              selected: !obj.isMain,
-            })),
-          };
-        }
-        return group;
-      }),
-    );
+    const currentGroup = groups[groupIndex];
+    const allCopyIndices = currentGroup.copies.map((_, idx) => idx);
+
+    setSelectedCopies((prev) => {
+      const newMap = new Map(prev);
+      const currentSelected = prev.get(groupIndex) || new Set();
+      const allSelected = allCopyIndices.every((idx) =>
+        currentSelected.has(idx),
+      );
+
+      if (allSelected) {
+        newMap.set(groupIndex, new Set());
+      } else {
+        newMap.set(groupIndex, new Set(allCopyIndices));
+      }
+      return newMap;
+    });
   };
 
-  const handleSelectObject = (groupIndex: number, objectId: number) => {
-    setGroups(
-      groups.map((group, idx) => {
-        if (idx === groupIndex) {
-          return {
-            ...group,
-            objects: group.objects.map((obj) =>
-              obj.id === objectId && !obj.isMain
-                ? { ...obj, selected: !obj.selected }
-                : obj,
-            ),
-          };
-        }
-        return group;
-      }),
-    );
+  const getSelectedCopiesCount = (groupIndex: number): number => {
+    return selectedCopies.get(groupIndex)?.size || 0;
   };
 
-  const handleDeleteSelected = async (groupIndex: number) => {
-    const group = groups[groupIndex];
-    const selectedIds = group.objects
-      .filter((obj) => obj.selected)
-      .map((obj) => obj.id);
+  const getTotalSelectedCount = (): number => {
+    let total = 0;
+    selectedCopies.forEach((set) => {
+      total += set.size;
+    });
+    return total;
+  };
 
-    if (selectedIds.length === 0) {
+  const handleDeleteSelected = async () => {
+    const filesToDelete: FileToDelete[] = [];
+
+    groups.forEach((group, groupIndex) => {
+      const selectedIndices = selectedCopies.get(groupIndex);
+      if (selectedIndices && selectedIndices.size > 0) {
+        selectedIndices.forEach((copyIndex) => {
+          filesToDelete.push({ fileName: group.copies[copyIndex].file_name });
+        });
+      }
+    });
+
+    if (filesToDelete.length === 0) {
       toast.error("Выберите объекты для удаления");
       return;
     }
 
-    // TODO: отправить selectedIds на бэкенд
-    setGroups(
-      groups.map((group, idx) => {
-        if (idx === groupIndex) {
-          return {
-            ...group,
-            objects: group.objects.filter((obj) => !obj.selected),
-          };
-        }
-        return group;
-      }),
-    );
+    if (
+      !window.confirm(
+        `Вы уверены, что хотите удалить ${filesToDelete.length} файлов? Это действие необратимо.`,
+      )
+    ) {
+      return;
+    }
 
-    toast.success(`Удалено ${selectedIds.length} объектов`);
+    setIsDeleting(true);
+    try {
+      await markupAPI.deleteMarkupLines(datasetId, { filesToDelete });
+
+      const updatedGroups = groups
+        .map((group, groupIndex) => ({
+          ...group,
+          copies: group.copies.filter(
+            (_, copyIndex) => !selectedCopies.get(groupIndex)?.has(copyIndex),
+          ),
+        }))
+        .filter((group) => group.copies.length > 0);
+
+      setGroups(updatedGroups);
+
+      const newSelected = new Map<number, Set<number>>();
+      updatedGroups.forEach((_, idx) => {
+        newSelected.set(idx, new Set());
+      });
+      setSelectedCopies(newSelected);
+
+      toast.success(`Удалено ${filesToDelete.length} файлов`);
+    } catch (error) {
+      const apiError = error as apiError;
+      if (apiError.messages && apiError.messages.length > 0) {
+        apiError.messages.forEach((msg: string) => toast.error(msg));
+      } else {
+        toast.error("Ошибка удаления файлов");
+      }
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
-  const hasSelectedInGroup = (group: DuplicateGroup): boolean => {
-    return group.objects.some((obj) => obj.selected);
+  const handleExport = async () => {
+    setIsExporting(true);
+    try {
+      const blob = await datasetAPI.exportDataset(datasetId);
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `dataset_${datasetId}.zip`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      toast.success("Экспорт датасета начался");
+    } catch (error) {
+      const apiError = error as apiError;
+      if (apiError.messages && apiError.messages.length > 0) {
+        apiError.messages.forEach((msg: string) => toast.error(msg));
+      } else {
+        toast.error("Ошибка экспорта датасета");
+      }
+    } finally {
+      setIsExporting(false);
+    }
   };
+
+  const totalSelected = getTotalSelectedCount();
 
   if (!dataset) {
     return (
@@ -222,7 +253,11 @@ const DuplicatesPage: React.FC = () => {
             <button className="duplicates-page__action-btn duplicates-page__action-btn--active">
               Работа с датасетом
             </button>
-            <button className="duplicates-page__export-btn">
+            <button
+              className="duplicates-page__export-btn"
+              onClick={handleExport}
+              disabled={isExporting}
+            >
               <img src={ExportIcon} alt="Export icon" />
             </button>
           </div>
@@ -230,63 +265,84 @@ const DuplicatesPage: React.FC = () => {
 
         <DatasetNavigation datasetId={datasetId} />
 
+        {totalSelected > 0 && (
+          <div className="duplicates-page__global-delete">
+            <button
+              className="duplicates-page__delete-btn"
+              onClick={handleDeleteSelected}
+              disabled={isDeleting}
+            >
+              {isDeleting
+                ? "Удаление..."
+                : `Удалить выбранные (${totalSelected})`}
+            </button>
+          </div>
+        )}
+
         <div className="duplicates-page__groups">
-          {groups.map((group, groupIndex) => (
-            <div key={groupIndex} className="duplicates-page__group">
-              <div className="duplicates-page__group-header">
-                <span className="duplicates-page__group-name">
-                  {group.groupName}
-                </span>
-                <div className="duplicates-page__group-actions">
-                  <button
-                    className="duplicates-page__select-all-btn"
-                    onClick={() => handleSelectAllInGroup(groupIndex)}
-                  >
-                    Выбрать все
-                  </button>
-                  {hasSelectedInGroup(group) && (
+          {groups.length === 0 ? (
+            <div className="duplicates-page__empty">Нет дубликатов</div>
+          ) : (
+            groups.map((group, groupIndex) => (
+              <div key={group.group_id} className="duplicates-page__group">
+                <div className="duplicates-page__group-header">
+                  <span className="duplicates-page__group-name">
+                    Группа дубликатов #{group.group_id}
+                  </span>
+                  <div className="duplicates-page__group-actions">
                     <button
-                      className="duplicates-page__delete-btn"
-                      onClick={() => handleDeleteSelected(groupIndex)}
+                      className="duplicates-page__select-all-btn"
+                      onClick={() => handleSelectAllInGroup(groupIndex)}
+                      disabled={isDeleting}
                     >
-                      Удалить выбранные
+                      {getSelectedCopiesCount(groupIndex) ===
+                      group.copies.length
+                        ? "Отменить все"
+                        : "Выбрать все"}
                     </button>
-                  )}
+                  </div>
                 </div>
-              </div>
-              <div className="duplicates-page__group-content">
-                <div className="duplicates-page__images">
-                  {group.objects.map((obj) => (
-                    <div
-                      key={obj.id}
-                      className={`duplicates-page__image-wrapper ${obj.isMain ? "duplicates-page__image-wrapper--main" : ""}`}
-                    >
-                      {!obj.isMain && (
+                <div className="duplicates-page__group-content">
+                  <div className="duplicates-page__images">
+                    <div className="duplicates-page__image-wrapper duplicates-page__image-wrapper--primary">
+                      <img
+                        src={group.primary.url}
+                        alt={`primary-${group.group_id}`}
+                        className="duplicates-page__image duplicates-page__image--primary"
+                      />
+                      <span className="duplicates-page__main-badge">
+                        Главный
+                      </span>
+                    </div>
+                    {group.copies.map((copy, copyIndex) => (
+                      <div
+                        key={copyIndex}
+                        className={`duplicates-page__image-wrapper ${selectedCopies.get(groupIndex)?.has(copyIndex) ? "duplicates-page__image-wrapper--selected" : ""}`}
+                      >
                         <input
                           type="checkbox"
                           className="duplicates-page__image-checkbox"
-                          checked={obj.selected}
-                          onChange={() =>
-                            handleSelectObject(groupIndex, obj.id)
+                          checked={
+                            selectedCopies.get(groupIndex)?.has(copyIndex) ||
+                            false
                           }
+                          onChange={() =>
+                            handleSelectCopy(groupIndex, copyIndex)
+                          }
+                          disabled={isDeleting}
                         />
-                      )}
-                      <img
-                        src={obj.imageUrl}
-                        alt={`duplicate-${obj.id}`}
-                        className="duplicates-page__image"
-                      />
-                      {obj.isMain && (
-                        <div className="duplicates-page__main-badge">
-                          Главный
-                        </div>
-                      )}
-                    </div>
-                  ))}
+                        <img
+                          src={copy.url}
+                          alt={`copy-${group.group_id}-${copyIndex}`}
+                          className="duplicates-page__image"
+                        />
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </div>
     </div>

@@ -4,18 +4,12 @@ import toast from "react-hot-toast";
 import ProfileHeader from "../components/ProfileHeader";
 import DatasetNavigation from "../components/DatasetNavigation";
 import { authService } from "../services/authService";
-import { datasetAPI } from "../services/api";
-import type { Dataset } from "../types/types";
+import { datasetAPI, markupAPI } from "../services/api";
+import { analyticsAPI } from "../services/analyticsAPI";
+import type { Dataset, QualityIssue, FileToDelete } from "../types/types";
+import type { apiError } from "../types/apiError";
 import ExportIcon from "../assets/icons/Export.svg";
-import './PoorQualityFilesPage.scss';
-
-interface PoorQualityItem {
-  id: number;
-  imageUrl: string;
-  label: string;
-  reason: string;
-  selected: boolean;
-}
+import "./PoorQualityFilesPage.scss";
 
 const PoorQualityFilesPage: React.FC = () => {
   const navigate = useNavigate();
@@ -24,8 +18,13 @@ const PoorQualityFilesPage: React.FC = () => {
 
   const [user, setUser] = useState<{ username: string } | null>(null);
   const [dataset, setDataset] = useState<Dataset | null>(null);
-  const [items, setItems] = useState<PoorQualityItem[]>([]);
+  const [items, setItems] = useState<QualityIssue[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isExporting, setIsExporting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [selectedIndices, setSelectedIndices] = useState<Set<number>>(
+    new Set(),
+  );
 
   useEffect(() => {
     if (!authService.isAuthenticated()) {
@@ -53,83 +52,148 @@ const PoorQualityFilesPage: React.FC = () => {
       }
     };
 
-    const fetchPoorQualityData = async () => {
-      // TODO: заменить на реальный API
-      setItems([
-        {
-          id: 1,
-          imageUrl: "https://picsum.photos/id/30/100/100",
-          label: "car",
-          reason: "Разрешение слишком низкое",
-          selected: false,
-        },
-        {
-          id: 2,
-          imageUrl: "https://picsum.photos/id/31/100/100",
-          label: "dog",
-          reason: "Файл повреждён",
-          selected: false,
-        },
-        {
-          id: 3,
-          imageUrl: "https://picsum.photos/id/32/100/100",
-          label: "cat",
-          reason: "Некорректный формат",
-          selected: false,
-        },
-        {
-          id: 4,
-          imageUrl: "https://picsum.photos/id/33/100/100",
-          label: "person",
-          reason: "Размытое изображение",
-          selected: false,
-        },
-      ]);
+    const fetchQualityData = async () => {
+      try {
+        const analytics = await analyticsAPI.getAnalytics(datasetId);
+        setItems(analytics.groups.quality_issues || []);
+      } catch (error) {
+        console.error("Ошибка загрузки файлов плохого качества", error);
+        setItems([]);
+      }
     };
 
     fetchUser();
     fetchDataset();
-    fetchPoorQualityData();
+    fetchQualityData();
   }, [navigate, datasetId]);
 
-  const hasSelectedItems = items.some((item) => item.selected);
+  const handleSelectItem = (index: number) => {
+    setSelectedIndices((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(index)) {
+        newSet.delete(index);
+      } else {
+        newSet.add(index);
+      }
+      return newSet;
+    });
+  };
 
   const handleSelectAll = () => {
-    setItems(items.map((item) => ({ ...item, selected: true })));
-  };
-
-  const handleDeselectAll = () => {
-    setItems(items.map((item) => ({ ...item, selected: false })));
-  };
-
-  const handleSelectItem = (itemId: number) => {
-    setItems(
-      items.map((item) =>
-        item.id === itemId ? { ...item, selected: !item.selected } : item,
-      ),
-    );
+    if (selectedIndices.size === items.length) {
+      setSelectedIndices(new Set());
+    } else {
+      setSelectedIndices(new Set(items.map((_, index) => index)));
+    }
   };
 
   const handleDeleteSelected = async () => {
-    const selectedIds = items
-      .filter((item) => item.selected)
-      .map((item) => item.id);
-
-    if (selectedIds.length === 0) {
+    if (selectedIndices.size === 0) {
       toast.error("Выберите объекты для удаления");
       return;
     }
 
-    // TODO: отправить selectedIds на бэкенд
-    setItems(items.filter((item) => !item.selected));
-    toast.success(`Удалено ${selectedIds.length} объектов`);
+    const filesToDelete: FileToDelete[] = Array.from(selectedIndices).map(
+      (idx) => ({
+        fileName: items[idx].file_name,
+      }),
+    );
+
+    if (
+      !window.confirm(
+        `Вы уверены, что хотите удалить ${filesToDelete.length} файлов? Это действие необратимо.`,
+      )
+    ) {
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      await markupAPI.deleteMarkupLines(datasetId, { filesToDelete });
+
+      const newItems = items.filter((_, idx) => !selectedIndices.has(idx));
+      setItems(newItems);
+      setSelectedIndices(new Set());
+
+      toast.success(`Удалено ${filesToDelete.length} файлов`);
+    } catch (error) {
+      const apiError = error as apiError;
+      if (apiError.messages && apiError.messages.length > 0) {
+        apiError.messages.forEach((msg: string) => toast.error(msg));
+      } else {
+        toast.error("Ошибка удаления файлов");
+      }
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const handleDeleteAll = async () => {
-    // TODO: отправить запрос на удаление всех файлов плохого качества
-    setItems([]);
-    toast.success("Все файлы плохого качества удалены");
+    if (items.length === 0) {
+      toast.error("Нет файлов для удаления");
+      return;
+    }
+
+    if (
+      !window.confirm(
+        `Вы уверены, что хотите удалить все ${items.length} файлов? Это действие необратимо.`,
+      )
+    ) {
+      return;
+    }
+
+    const filesToDelete: FileToDelete[] = items.map((item) => ({
+      fileName: item.file_name,
+    }));
+
+    setIsDeleting(true);
+    try {
+      await markupAPI.deleteMarkupLines(datasetId, { filesToDelete });
+      setItems([]);
+      setSelectedIndices(new Set());
+      toast.success(`Удалено ${filesToDelete.length} файлов`);
+    } catch (error) {
+      const apiError = error as apiError;
+      if (apiError.messages && apiError.messages.length > 0) {
+        apiError.messages.forEach((msg: string) => toast.error(msg));
+      } else {
+        toast.error("Ошибка удаления файлов");
+      }
+    } finally {
+      setIsDeleting(false);
+    }
   };
+
+  const handleExport = async () => {
+    setIsExporting(true);
+    try {
+      const blob = await datasetAPI.exportDataset(datasetId);
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `dataset_${datasetId}.zip`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      toast.success("Экспорт датасета начался");
+    } catch (error) {
+      const apiError = error as apiError;
+      if (apiError.messages && apiError.messages.length > 0) {
+        apiError.messages.forEach((msg: string) => toast.error(msg));
+      } else {
+        toast.error("Ошибка экспорта датасета");
+      }
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const filteredItems = items.filter((item) =>
+    item.tags?.some((tag) =>
+      tag.toLowerCase().includes(searchQuery.toLowerCase()),
+    ),
+  );
 
   if (!dataset) {
     return (
@@ -143,6 +207,7 @@ const PoorQualityFilesPage: React.FC = () => {
   }
 
   const visibilityText = dataset.type === "OPEN" ? "Публичный" : "Приватный";
+  const hasSelectedItems = selectedIndices.size > 0;
 
   return (
     <div className="poor-quality-files-page">
@@ -179,7 +244,11 @@ const PoorQualityFilesPage: React.FC = () => {
             <button className="poor-quality-files-page__action-btn poor-quality-files-page__action-btn--active">
               Работа с датасетом
             </button>
-            <button className="poor-quality-files-page__export-btn">
+            <button
+              className="poor-quality-files-page__export-btn"
+              onClick={handleExport}
+              disabled={isExporting}
+            >
               <img src={ExportIcon} alt="Export icon" />
             </button>
           </div>
@@ -191,6 +260,7 @@ const PoorQualityFilesPage: React.FC = () => {
           <button
             className="poor-quality-files-page__delete-all-btn"
             onClick={handleDeleteAll}
+            disabled={isDeleting || items.length === 0}
           >
             Удалить всё
           </button>
@@ -198,8 +268,11 @@ const PoorQualityFilesPage: React.FC = () => {
             <button
               className="poor-quality-files-page__delete-selected-btn"
               onClick={handleDeleteSelected}
+              disabled={isDeleting}
             >
-              Удалить выбранные
+              {isDeleting
+                ? "Удаление..."
+                : `Удалить выбранные (${selectedIndices.size})`}
             </button>
           )}
         </div>
@@ -211,37 +284,46 @@ const PoorQualityFilesPage: React.FC = () => {
                 <th>
                   <input
                     type="checkbox"
-                    onChange={(e) =>
-                      e.target.checked ? handleSelectAll() : handleDeselectAll()
+                    checked={
+                      selectedIndices.size === filteredItems.length &&
+                      filteredItems.length > 0
                     }
+                    onChange={handleSelectAll}
+                    disabled={isDeleting || filteredItems.length === 0}
                   />
                 </th>
                 <th>Объект</th>
-                <th>Метка</th>
-                <th>Причина попадания</th>
+                <th>Теги</th>
+                <th>Оценка</th>
               </tr>
             </thead>
             <tbody>
-              {items.map((item) => (
-                <tr key={item.id}>
-                  <td>
-                    <input
-                      type="checkbox"
-                      checked={item.selected}
-                      onChange={() => handleSelectItem(item.id)}
-                    />
-                  </td>
-                  <td>
-                    <img
-                      src={item.imageUrl}
-                      alt={`poor-quality-${item.id}`}
-                      className="poor-quality-files-page__thumbnail"
-                    />
-                  </td>
-                  <td>{item.label}</td>
-                  <td>{item.reason}</td>
-                </tr>
-              ))}
+              {filteredItems.map((item) => {
+                const originalIndex = items.findIndex(
+                  (i) => i.file_name === item.file_name,
+                );
+                return (
+                  <tr key={item.file_name}>
+                    <td>
+                      <input
+                        type="checkbox"
+                        checked={selectedIndices.has(originalIndex)}
+                        onChange={() => handleSelectItem(originalIndex)}
+                        disabled={isDeleting}
+                      />
+                    </td>
+                    <td>
+                      <img
+                        src={item.url}
+                        alt={`poor-quality-${item.file_name}`}
+                        className="poor-quality-files-page__thumbnail"
+                      />
+                    </td>
+                    <td>{item.tags?.join(", ")}</td>
+                    <td>{item.quality_score}</td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

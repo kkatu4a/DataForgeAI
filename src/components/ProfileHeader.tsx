@@ -52,7 +52,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
               : "profile-header__link"
           }
         >
-          Датасеты
+          Датазитории
         </NavLink>
         <NavLink
           to="/profile/stars"

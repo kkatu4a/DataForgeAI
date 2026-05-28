@@ -56,7 +56,7 @@ const DatasetCard: React.FC<DatasetCardProps> = ({
             className="dataset-card__analytics-btn"
             onClick={handleGoToAnalytics}
           >
-            Перейти в датасет
+            Перейти в датазиторий
           </button>
         )}
         {onStarClick && (
@@ -69,7 +69,7 @@ const DatasetCard: React.FC<DatasetCardProps> = ({
         )}
         {onDeleteClick && (
           <button className="dataset-card__delete-btn" onClick={onDeleteClick}>
-            Удалить датасет
+            Удалить датазиторий
           </button>
         )}
       </div>

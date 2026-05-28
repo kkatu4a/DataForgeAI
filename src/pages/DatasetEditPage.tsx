@@ -13,7 +13,7 @@ import type { Dataset } from "../types/types";
 import type { apiError } from "../types/apiError";
 import type { BrokenFile } from "../types/types";
 import ExportIcon from "../assets/icons/Export.svg";
-import './DatasetEditPage.scss';
+import "./DatasetEditPage.scss";
 
 interface FileUploadState {
   photos: File[];
@@ -38,13 +38,12 @@ const DatasetEditPage: React.FC = () => {
   const [dataset, setDataset] = useState<Dataset | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isExporting, setIsExporting] = useState(false);
 
-  // Данные формы
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [visibility, setVisibility] = useState<"PUBLIC" | "PRIVATE">("PUBLIC");
 
-  // Файлы для догрузки
   const [filesToUpload, setFilesToUpload] = useState<FileUploadState>({
     photos: [],
     labelsFile: null,
@@ -52,7 +51,6 @@ const DatasetEditPage: React.FC = () => {
     metadataFile: null,
   });
 
-  // Состояние уже загруженных файлов (получаем с бэкенда)
   const [existingFiles, setExistingFiles] = useState<FileExistsState>({
     hasPhotos: false,
     hasLabels: false,
@@ -88,25 +86,44 @@ const DatasetEditPage: React.FC = () => {
         setName(data.name);
         setDescription(data.description);
         setVisibility(data.type === "OPEN" ? "PUBLIC" : "PRIVATE");
-
-        // TODO: получить информацию о загруженных файлах от бэкенда
-        // Пока заглушка
-        setExistingFiles({
-          hasPhotos: true,
-          hasLabels: true,
-          hasProbabilities: false,
-          hasMetadata: false,
-        });
       } catch (error) {
         console.error("Ошибка загрузки датасета", error);
       }
     };
 
+    const fetchExistingFilesInfo = async () => {
+      try {
+        const analytics = await analyticsAPI.getAnalytics(datasetId);
+
+        const hasPhotos =
+          analytics.groups.all_objects &&
+          analytics.groups.all_objects.length > 0;
+        const hasLabels = analytics.groups.label_issues !== undefined;
+        const hasProbabilities =
+          analytics.groups.all_objects?.some(
+            (obj) => obj.confidence !== undefined,
+          ) || false;
+        const hasMetadata =
+          analytics.groups.all_objects?.some(
+            (obj) => obj.label_score !== undefined,
+          ) || false;
+
+        setExistingFiles({
+          hasPhotos,
+          hasLabels,
+          hasProbabilities,
+          hasMetadata,
+        });
+      } catch (error) {
+        console.error("Ошибка получения информации о файлах", error);
+      }
+    };
+
     fetchUser();
     fetchDataset();
+    fetchExistingFilesInfo();
   }, [navigate, datasetId]);
 
-  // Вычисляем hasUnsavedChanges
   const isNameChanged = dataset ? name !== dataset.name : false;
   const isDescriptionChanged = dataset
     ? description !== dataset.description
@@ -134,7 +151,6 @@ const DatasetEditPage: React.FC = () => {
     setIsLoading(true);
 
     try {
-      // 1. Сохраняем изменения датасета
       if (
         dataset &&
         (name !== dataset.name ||
@@ -148,19 +164,16 @@ const DatasetEditPage: React.FC = () => {
         });
       }
 
-      // 2. Загружаем фотографии (если есть)
       if (filesToUpload.photos.length > 0 && existingFiles.hasPhotos) {
         await fileAPI.uploadImages(datasetId, filesToUpload.photos);
         setFilesToUpload((prev) => ({ ...prev, photos: [] }));
       }
 
-      // 3. Загружаем файл с метками (если есть)
       if (filesToUpload.labelsFile && existingFiles.hasLabels) {
         await fileAPI.uploadMarkup(datasetId, filesToUpload.labelsFile);
         setFilesToUpload((prev) => ({ ...prev, labelsFile: null }));
       }
 
-      // 4. Загружаем вероятности (если есть)
       if (filesToUpload.probabilitiesFile && existingFiles.hasProbabilities) {
         await fileAPI.uploadProbability(
           datasetId,
@@ -169,7 +182,6 @@ const DatasetEditPage: React.FC = () => {
         setFilesToUpload((prev) => ({ ...prev, probabilitiesFile: null }));
       }
 
-      // 5. Загружаем метаданные (если есть)
       if (filesToUpload.metadataFile && existingFiles.hasMetadata) {
         await fileAPI.uploadMetadata(datasetId, filesToUpload.metadataFile);
         setFilesToUpload((prev) => ({ ...prev, metadataFile: null }));
@@ -178,12 +190,31 @@ const DatasetEditPage: React.FC = () => {
       toast.success("Все изменения сохранены");
       setHasUnsavedChanges(false);
 
-      // Обновляем данные датасета
       const updatedDataset = await datasetAPI.getDatasetById(datasetId);
       setDataset(updatedDataset);
       setName(updatedDataset.name);
       setDescription(updatedDataset.description);
       setVisibility(updatedDataset.type === "OPEN" ? "PUBLIC" : "PRIVATE");
+
+      const analytics = await analyticsAPI.getAnalytics(datasetId);
+      const hasPhotos =
+        analytics.groups.all_objects && analytics.groups.all_objects.length > 0;
+      const hasLabels = analytics.groups.label_issues !== undefined;
+      const hasProbabilities =
+        analytics.groups.all_objects?.some(
+          (obj) => obj.confidence !== undefined,
+        ) || false;
+      const hasMetadata =
+        analytics.groups.all_objects?.some(
+          (obj) => obj.label_score !== undefined,
+        ) || false;
+
+      setExistingFiles({
+        hasPhotos,
+        hasLabels,
+        hasProbabilities,
+        hasMetadata,
+      });
     } catch (error) {
       const apiError = error as apiError;
       if (apiError.messages && apiError.messages.length > 0) {
@@ -211,7 +242,7 @@ const DatasetEditPage: React.FC = () => {
       return;
     }
 
-    const broken = await analyticsAPI.checkBrokenFiles(allNewFiles);
+    const broken = await analyticsAPI.checkBrokenFiles(datasetId);
 
     if (broken.length > 0) {
       setBrokenFiles(broken);
@@ -229,6 +260,31 @@ const DatasetEditPage: React.FC = () => {
     toast.success(
       "Файлы будут сохранены при нажатии 'Сохранить все изменения'",
     );
+  };
+
+  const handleExport = async () => {
+    setIsExporting(true);
+    try {
+      const blob = await datasetAPI.exportDataset(datasetId);
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `dataset_${datasetId}.zip`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      toast.success("Экспорт датасета начался");
+    } catch (error) {
+      const apiError = error as apiError;
+      if (apiError.messages && apiError.messages.length > 0) {
+        apiError.messages.forEach((msg: string) => toast.error(msg));
+      } else {
+        toast.error("Ошибка экспорта датасета");
+      }
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   if (!dataset) {
@@ -279,7 +335,11 @@ const DatasetEditPage: React.FC = () => {
             <button className="dataset-edit-page__action-btn dataset-edit-page__action-btn--active">
               Работа с датасетом
             </button>
-            <button className="dataset-edit-page__export-btn">
+            <button
+              className="dataset-edit-page__export-btn"
+              onClick={handleExport}
+              disabled={isExporting}
+            >
               <img src={ExportIcon} alt="Export icon" />
             </button>
           </div>
@@ -289,12 +349,12 @@ const DatasetEditPage: React.FC = () => {
 
         <div className="dataset-edit-page__section">
           <h2 className="dataset-edit-page__section-title">
-            Редактирование датасета
+            Редактирование датазитория
           </h2>
 
           <div className="dataset-edit-page__field">
             <label className="dataset-edit-page__label">
-              Название датасета
+              Название датазитория
             </label>
             <input
               type="text"
@@ -307,7 +367,7 @@ const DatasetEditPage: React.FC = () => {
 
           <div className="dataset-edit-page__field">
             <label className="dataset-edit-page__label">
-              Описание датасета
+              Описание датазитория
             </label>
             <textarea
               className="dataset-edit-page__textarea"
@@ -351,40 +411,23 @@ const DatasetEditPage: React.FC = () => {
               загружены ранее
             </p>
 
-            {/* Фотографии */}
-            {existingFiles.hasPhotos && (
-              <PhotoUploadField
-                label="Фотографии (догрузка)"
-                required={false}
-                onPhotosSelect={(photos) =>
-                  setFilesToUpload((prev) => ({ ...prev, photos }))
-                }
-              />
-            )}
-            {!existingFiles.hasPhotos && (
-              <div className="dataset-edit-page__disabled-info">
-                Фотографии не были загружены ранее. Догрузка недоступна.
-              </div>
-            )}
+            <PhotoUploadField
+              label="Фотографии (догрузка)"
+              required={false}
+              onPhotosSelect={(photos) =>
+                setFilesToUpload((prev) => ({ ...prev, photos }))
+              }
+            />
 
-            {/* Файл с метками */}
-            {existingFiles.hasLabels && (
-              <FileUploadField
-                label="Файл с метками (догрузка)"
-                required={false}
-                onFileSelect={(file) =>
-                  setFilesToUpload((prev) => ({ ...prev, labelsFile: file }))
-                }
-                acceptedFileTypes=".csv"
-              />
-            )}
-            {!existingFiles.hasLabels && (
-              <div className="dataset-edit-page__disabled-info">
-                Файл с метками не был загружен ранее. Догрузка недоступна.
-              </div>
-            )}
+            <FileUploadField
+              label="Файл с метками (догрузка)"
+              required={false}
+              onFileSelect={(file) =>
+                setFilesToUpload((prev) => ({ ...prev, labelsFile: file }))
+              }
+              acceptedFileTypes=".csv"
+            />
 
-            {/* Файл с вероятностями модели */}
             {existingFiles.hasProbabilities && (
               <FileUploadField
                 label="Файл с вероятностями модели (догрузка)"
@@ -404,7 +447,6 @@ const DatasetEditPage: React.FC = () => {
               </div>
             )}
 
-            {/* Файл с метаданными */}
             {existingFiles.hasMetadata && (
               <FileUploadField
                 label="Файл с метаданными (догрузка)"

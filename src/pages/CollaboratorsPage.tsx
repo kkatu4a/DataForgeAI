@@ -8,7 +8,7 @@ import { datasetAPI } from "../services/api";
 import type { Dataset } from "../types/types";
 import type { apiError } from "../types/apiError";
 import ExportIcon from "../assets/icons/Export.svg";
-import './CollaboratorsPage.scss';
+import "./CollaboratorsPage.scss";
 
 interface Collaborator {
   id: number;
@@ -27,9 +27,11 @@ const CollaboratorsPage: React.FC = () => {
   const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  
+  const [isExporting, setIsExporting] = useState(false);
+
   const [newCollaboratorEmail, setNewCollaboratorEmail] = useState("");
-  const [newCollaboratorRole, setNewCollaboratorRole] = useState<Collaborator["role"]>("labeler");
+  const [newCollaboratorRole, setNewCollaboratorRole] =
+    useState<Collaborator["role"]>("labeler");
 
   useEffect(() => {
     if (!authService.isAuthenticated()) {
@@ -60,7 +62,12 @@ const CollaboratorsPage: React.FC = () => {
     const fetchCollaborators = async () => {
       setCollaborators([
         { id: 1, email: "owner@example.com", username: "owner", role: "admin" },
-        { id: 2, email: "ml@example.com", username: "ml_engineer", role: "ml_engineer" },
+        {
+          id: 2,
+          email: "ml@example.com",
+          username: "ml_engineer",
+          role: "ml_engineer",
+        },
       ]);
     };
 
@@ -103,7 +110,7 @@ const CollaboratorsPage: React.FC = () => {
   const handleRemoveCollaborator = async (collaboratorId: number) => {
     setIsLoading(true);
     try {
-      setCollaborators(collaborators.filter(c => c.id !== collaboratorId));
+      setCollaborators(collaborators.filter((c) => c.id !== collaboratorId));
       toast.success("Соавтор удалён");
     } catch (error) {
       const apiError = error as apiError;
@@ -117,12 +124,17 @@ const CollaboratorsPage: React.FC = () => {
     }
   };
 
-  const handleRoleChange = async (collaboratorId: number, newRole: Collaborator["role"]) => {
+  const handleRoleChange = async (
+    collaboratorId: number,
+    newRole: Collaborator["role"],
+  ) => {
     setIsLoading(true);
     try {
-      setCollaborators(collaborators.map(c =>
-        c.id === collaboratorId ? { ...c, role: newRole } : c
-      ));
+      setCollaborators(
+        collaborators.map((c) =>
+          c.id === collaboratorId ? { ...c, role: newRole } : c,
+        ),
+      );
       toast.success("Роль обновлена");
     } catch (error) {
       const apiError = error as apiError;
@@ -133,6 +145,31 @@ const CollaboratorsPage: React.FC = () => {
       }
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleExport = async () => {
+    setIsExporting(true);
+    try {
+      const blob = await datasetAPI.exportDataset(datasetId);
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `dataset_${datasetId}.zip`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      toast.success("Экспорт датасета начался");
+    } catch (error) {
+      const apiError = error as apiError;
+      if (apiError.messages && apiError.messages.length > 0) {
+        apiError.messages.forEach((msg: string) => toast.error(msg));
+      } else {
+        toast.error("Ошибка экспорта датасета");
+      }
+    } finally {
+      setIsExporting(false);
     }
   };
 
@@ -175,14 +212,20 @@ const CollaboratorsPage: React.FC = () => {
           <div className="collaborators-page__actions">
             <button
               className="collaborators-page__action-btn"
-              onClick={() => navigate(`/profile/datasets/${datasetId}/analytics`)}
+              onClick={() =>
+                navigate(`/profile/datasets/${datasetId}/analytics`)
+              }
             >
               Аналитика
             </button>
             <button className="collaborators-page__action-btn collaborators-page__action-btn--active">
               Работа с датасетом
             </button>
-            <button className="collaborators-page__export-btn">
+            <button
+              className="collaborators-page__export-btn"
+              onClick={handleExport}
+              disabled={isExporting}
+            >
               <img src={ExportIcon} alt="Export icon" />
             </button>
           </div>
@@ -191,8 +234,10 @@ const CollaboratorsPage: React.FC = () => {
         <DatasetNavigation datasetId={datasetId} />
 
         <div className="collaborators-page__form">
-          <h2 className="collaborators-page__section-title">Добавление соавтора</h2>
-          
+          <h2 className="collaborators-page__section-title">
+            Добавление соавтора
+          </h2>
+
           <div className="collaborators-page__add-form">
             <div className="collaborators-page__field">
               <label className="collaborators-page__label">Email</label>
@@ -205,13 +250,15 @@ const CollaboratorsPage: React.FC = () => {
                 disabled={isLoading}
               />
             </div>
-            
+
             <div className="collaborators-page__field">
               <label className="collaborators-page__label">Роль</label>
               <select
                 className="collaborators-page__select"
                 value={newCollaboratorRole}
-                onChange={(e) => setNewCollaboratorRole(e.target.value as Collaborator["role"])}
+                onChange={(e) =>
+                  setNewCollaboratorRole(e.target.value as Collaborator["role"])
+                }
                 disabled={isLoading}
               >
                 <option value="admin">Администратор</option>
@@ -221,7 +268,7 @@ const CollaboratorsPage: React.FC = () => {
                 <option value="analyst">Аналитик</option>
               </select>
             </div>
-            
+
             <button
               className="collaborators-page__add-btn"
               onClick={handleAddCollaborator}
@@ -233,8 +280,10 @@ const CollaboratorsPage: React.FC = () => {
         </div>
 
         <div className="collaborators-page__list">
-          <h2 className="collaborators-page__section-title">Список соавторов</h2>
-          
+          <h2 className="collaborators-page__section-title">
+            Список соавторов
+          </h2>
+
           <div className="collaborators-page__table-wrapper">
             <table className="collaborators-page__table">
               <thead>
@@ -254,7 +303,12 @@ const CollaboratorsPage: React.FC = () => {
                       <select
                         className="collaborators-page__role-select"
                         value={collaborator.role}
-                        onChange={(e) => handleRoleChange(collaborator.id, e.target.value as Collaborator["role"])}
+                        onChange={(e) =>
+                          handleRoleChange(
+                            collaborator.id,
+                            e.target.value as Collaborator["role"],
+                          )
+                        }
                         disabled={isLoading}
                       >
                         <option value="admin">Администратор</option>
@@ -267,7 +321,9 @@ const CollaboratorsPage: React.FC = () => {
                     <td>
                       <button
                         className="collaborators-page__remove-btn"
-                        onClick={() => handleRemoveCollaborator(collaborator.id)}
+                        onClick={() =>
+                          handleRemoveCollaborator(collaborator.id)
+                        }
                         disabled={isLoading}
                       >
                         Удалить

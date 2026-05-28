@@ -1,20 +1,20 @@
 import React from "react";
-import type {
-  GeneralAnalytics as GeneralAnalyticsType,
-  ClassData,
-} from "../types/types";
+import type { Summary, ClassInfo } from "../types/types";
 import ClassPieChart from "./ClassPieChart";
-import './GeneralAnalytics.scss';
+import "./GeneralAnalytics.scss";
 
 interface GeneralAnalyticsProps {
-  general: GeneralAnalyticsType;
-  classData: ClassData[];
+  summary: Summary;
 }
 
-const GeneralAnalytics: React.FC<GeneralAnalyticsProps> = ({
-  general,
-  classData,
-}) => {
+const GeneralAnalytics: React.FC<GeneralAnalyticsProps> = ({ summary }) => {
+  const classData = summary.classes.map((cls: ClassInfo) => ({
+    name: cls.name,
+    value: cls.percentage,
+    count: cls.count,
+    deficit: cls.deficit,
+  }));
+
   return (
     <div className="general-analytics">
       <div className="general-analytics__stats">
@@ -23,7 +23,7 @@ const GeneralAnalytics: React.FC<GeneralAnalyticsProps> = ({
             Уровень готовности
           </span>
           <span className="general-analytics__stat-value">
-            {general.readinessLevel}%
+            {summary.readiness}%
           </span>
         </div>
         <div className="general-analytics__stat">
@@ -31,7 +31,7 @@ const GeneralAnalytics: React.FC<GeneralAnalyticsProps> = ({
             Количество объектов
           </span>
           <span className="general-analytics__stat-value">
-            {general.totalObjects}
+            {summary.n_total}
           </span>
         </div>
         <div className="general-analytics__stat">
@@ -39,7 +39,7 @@ const GeneralAnalytics: React.FC<GeneralAnalyticsProps> = ({
             Количество классов
           </span>
           <span className="general-analytics__stat-value">
-            {general.totalClasses}
+            {summary.n_classes}
           </span>
         </div>
       </div>

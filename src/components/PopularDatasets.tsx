@@ -11,15 +11,15 @@ const PopularDatasets: React.FC<PopularDatasetsProps> = ({ datasets }) => {
   if (datasets.length === 0) {
     return (
       <div className="popular-datasets">
-        <h3 className="popular-datasets__title">Популярные датасеты</h3>
-        <p className="popular-datasets__empty">Нет датасетов для отображения</p>
+        <h3 className="popular-datasets__title">Популярные датазитории</h3>
+        <p className="popular-datasets__empty">Нет датазитории для отображения</p>
       </div>
     );
   }
 
   return (
     <div className="popular-datasets">
-      <h3 className="popular-datasets__title">Популярные датасеты</h3>
+      <h3 className="popular-datasets__title">Популярные датазитории</h3>
       <div className="popular-datasets__list">
         {datasets.map((dataset) => (
           <DatasetCard key={dataset.id} dataset={dataset} showCreator={true} />

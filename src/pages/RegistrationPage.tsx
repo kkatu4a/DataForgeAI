@@ -23,7 +23,7 @@ const RegistrationPage: React.FC = () => {
       await registrationService.registration({ username, email, password });
 
       toast.success("Регистрация успешна! Теперь войдите в систему");
-      navigate("/login"); // ← просто перенаправляем на страницу входа
+      navigate("/login");
     } catch (error) {
       const apiError = error as apiError;
 

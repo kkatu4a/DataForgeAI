@@ -1,21 +1,19 @@
 import React, { useState, useMemo } from "react";
-import type { AnalyticsObject } from "../types/types";
-import './ObjectsTable.scss';
+import type { AllObject } from "../types/types";
+import "./ObjectsTable.scss";
 
 interface ObjectsTableProps {
-  data: AnalyticsObject[];
+  data: AllObject[];
 }
 
 const ObjectsTable: React.FC<ObjectsTableProps> = ({ data }) => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [sortField, setSortField] = useState<keyof AnalyticsObject | null>(
-    null,
-  );
+  const [sortField, setSortField] = useState<keyof AllObject | null>(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  const handleSort = (field: keyof AnalyticsObject) => {
+  const handleSort = (field: keyof AllObject) => {
     if (sortField === field) {
       setSortDirection(sortDirection === "asc" ? "desc" : "asc");
     } else {
@@ -27,7 +25,9 @@ const ObjectsTable: React.FC<ObjectsTableProps> = ({ data }) => {
   const filteredData = useMemo(() => {
     if (!searchQuery) return data;
     return data.filter((item) =>
-      item.tag?.toLowerCase().includes(searchQuery.toLowerCase()),
+      item.tags?.some((tag) =>
+        tag.toLowerCase().includes(searchQuery.toLowerCase()),
+      ),
     );
   }, [data, searchQuery]);
 
@@ -60,7 +60,7 @@ const ObjectsTable: React.FC<ObjectsTableProps> = ({ data }) => {
         <input
           type="text"
           className="objects-table__search"
-          placeholder="Поиск по тегу..."
+          placeholder="Поиск по тегам..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
@@ -69,14 +69,14 @@ const ObjectsTable: React.FC<ObjectsTableProps> = ({ data }) => {
         <table className="objects-table__table">
           <thead>
             <tr>
-              <th onClick={() => handleSort("imageUrl")}>
+              <th onClick={() => handleSort("url")}>
                 Объект
-                {sortField === "imageUrl" &&
-                  (sortDirection === "asc" ? " ↑" : " ↓")}
+                {sortField === "url" && (sortDirection === "asc" ? " ↑" : " ↓")}
               </th>
-              <th onClick={() => handleSort("tag")}>
-                Тег
-                {sortField === "tag" && (sortDirection === "asc" ? " ↑" : " ↓")}
+              <th onClick={() => handleSort("tags")}>
+                Теги
+                {sortField === "tags" &&
+                  (sortDirection === "asc" ? " ↑" : " ↓")}
               </th>
               <th onClick={() => handleSort("entropy")}>
                 Энтропия
@@ -88,39 +88,39 @@ const ObjectsTable: React.FC<ObjectsTableProps> = ({ data }) => {
                 {sortField === "confidence" &&
                   (sortDirection === "asc" ? " ↑" : " ↓")}
               </th>
-              <th onClick={() => handleSort("errorProbability")}>
+              <th onClick={() => handleSort("label_score")}>
                 Вероятность ошибки разметки
-                {sortField === "errorProbability" &&
+                {sortField === "label_score" &&
                   (sortDirection === "asc" ? " ↑" : " ↓")}
               </th>
-              <th onClick={() => handleSort("novelty")}>
+              <th onClick={() => handleSort("outlier_score")}>
                 Новизна
-                {sortField === "novelty" &&
+                {sortField === "outlier_score" &&
                   (sortDirection === "asc" ? " ↑" : " ↓")}
               </th>
-              <th onClick={() => handleSort("usefulness")}>
+              <th onClick={() => handleSort("utility_score")}>
                 Полезность для дообучения
-                {sortField === "usefulness" &&
+                {sortField === "utility_score" &&
                   (sortDirection === "asc" ? " ↑" : " ↓")}
               </th>
             </tr>
           </thead>
           <tbody>
-            {paginatedData.map((item) => (
-              <tr key={item.id}>
+            {paginatedData.map((item, index) => (
+              <tr key={index}>
                 <td>
                   <img
-                    src={item.imageUrl}
-                    alt={`object-${item.id}`}
+                    src={item.url}
+                    alt={`object-${index}`}
                     className="objects-table__thumbnail"
                   />
                 </td>
-                <td>{item.tag}</td>
+                <td>{item.tags?.join(", ")}</td>
                 <td>{item.entropy}</td>
                 <td>{item.confidence}</td>
-                <td>{item.errorProbability}</td>
-                <td>{item.novelty}</td>
-                <td>{item.usefulness}</td>
+                <td>{item.label_score}</td>
+                <td>{item.outlier_score}</td>
+                <td>{item.utility_score}</td>
               </tr>
             ))}
           </tbody>

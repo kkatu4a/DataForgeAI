@@ -1,16 +1,27 @@
 import React from "react";
-import './RoadmapBlock.scss';
+import type { RoadmapItem } from "../types/types";
+import "./RoadmapBlock.scss";
 
 interface RoadmapBlockProps {
-  text: string;
+  roadmap: RoadmapItem[];
 }
 
-const RoadmapBlock: React.FC<RoadmapBlockProps> = ({ text }) => {
+const RoadmapBlock: React.FC<RoadmapBlockProps> = ({ roadmap }) => {
   return (
     <div className="roadmap-block">
       <div className="roadmap-block__icon"></div>
       <div className="roadmap-block__content">
-        <p className="roadmap-block__text">{text}</p>
+        {roadmap.length === 0 ? (
+          <p className="roadmap-block__text">Нет рекомендаций</p>
+        ) : (
+          <ul className="roadmap-block__list">
+            {roadmap.map((item) => (
+              <li key={item.id} className="roadmap-block__item">
+                {item.action}
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </div>
   );
